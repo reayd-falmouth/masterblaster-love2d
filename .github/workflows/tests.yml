@@ -1,0 +1,29 @@
+name: Unit Tests
+
+on:
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Cache LuaRocks Dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.luarocks
+          key: luarocks-${{ runner.os }}-${{ hashFiles('**/rockspec') }}
+          restore-keys: |
+            luarocks-${{ runner.os }}-
+
+      - name: Install Lua and Busted
+        run: |
+          make install
+
+      - name: Run Unit Tests
+        run: |
+          make test
