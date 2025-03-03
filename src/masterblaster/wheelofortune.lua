@@ -1,3 +1,5 @@
+require("globals")
+
 wheelOfFortune = {}
 
 local players = {}  -- Player list
@@ -15,7 +17,7 @@ function wheelOfFortune.load(playerData)
     spinSpeed = 0.05
     isSpinning = true
     timer = 0
-    selectionSound = love.audio.newSource("assets/sfx/cash.ogg", "static")  -- Load sound effect
+    selectionSound = love.audio.newSource("assets/sounds/cash.ogg", "static")  -- Load sound effect
 end
 
 function wheelOfFortune.update(dt)
@@ -37,7 +39,7 @@ end
 
 function wheelOfFortune.draw()
     love.graphics.setColor(0, 0, 1)  -- Blue text
-    love.graphics.printf("WHEEL-O-FORTUNE", 0, 20, love.graphics.getWidth(), "center")
+    love.graphics.printf("WHEEL-O-FORTUNE", 0, 20, VIRTUAL_WIDTH, "center")
 
     local startY = 60
     for i, player in ipairs(players) do

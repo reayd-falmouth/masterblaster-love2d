@@ -41,8 +41,8 @@ end
 
 function MainMenu.draw()
     -- Get window size
-    local windowWidth = love.graphics.getWidth()
-    local windowHeight = love.graphics.getHeight()
+    local windowWidth = VIRTUAL_WIDTH
+    local windowHeight = VIRTUAL_HEIGHT
 
     -- Define scale factors
     local fontScale = 1

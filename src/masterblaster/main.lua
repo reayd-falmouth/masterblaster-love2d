@@ -1,10 +1,27 @@
-local MainMenu = require("menu")
+require("globals")
+local Title = require("title")
+local currentState = Title
 
-local currentState = MainMenu  -- Start with the main menu
-local currentMusic  -- Variable to track currently playing music
+-- These variables will be computed on window resize
+local scale, offsetX, offsetY = 1, 0, 0
 
 function love.load()
-    currentState.load()
+    if currentState.load then
+        currentState.load()
+    end
+end
+
+-- Recalculate the uniform scale and offsets when the window size changes
+function love.resize(w, h)
+    -- Use the smaller ratio to maintain aspect ratio
+    local uniformScale = math.min(w / VIRTUAL_WIDTH, h / VIRTUAL_HEIGHT)
+
+    -- Multiply by zoomFactor to zoom in/out
+    scale = uniformScale
+
+    -- Calculate offsets to center the content
+    offsetX = (w - VIRTUAL_WIDTH * scale) / 2
+    offsetY = (h - VIRTUAL_HEIGHT * scale) / 2
 end
 
 function love.update(dt)
@@ -14,9 +31,21 @@ function love.update(dt)
 end
 
 function love.draw()
+    love.graphics.setDefaultFilter("nearest", "nearest")
+
+    love.graphics.push()
+
+    -- First, translate the coordinate system by the calculated offsets
+    love.graphics.translate(offsetX, offsetY)
+
+    -- Then apply the uniform scale (including zoom)
+    love.graphics.scale(scale)
+
     if currentState.draw then
         currentState.draw()
     end
+
+    love.graphics.pop()
 end
 
 function love.keypressed(key)
@@ -27,19 +56,16 @@ end
 
 -- Function to switch states and manage music
 function switchState(newState, musicFile)
-    -- Stop current music if playing
     if currentMusic then
         currentMusic:stop()
         currentMusic = nil
     end
 
-    -- Switch to the new state
     currentState = newState
     if currentState.load then
         currentState.load()
     end
 
-    -- Only play new music if a file is provided (skip menu music)
     if musicFile then
         currentMusic = love.audio.newSource(musicFile, "stream")
         currentMusic:setLooping(true)

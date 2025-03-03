@@ -1,6 +1,8 @@
+require("globals")
 local GameSettings = require("settings")
 local UITheme = require("theme")  -- Import shared colors
-local Game = {}
+local Spawns = require("spawns")
+Game = {}
 
 local gameMusic -- Variable to store the music
 local alarmSound -- Variable to store the alarm sound
@@ -13,126 +15,101 @@ local alarmTriggered
 local tension = 0.002
 local playerResults = {} -- Store player standings
 
-local tileSheet
 local tileQuads = {}  -- Initialize empty table
-local tileSize = 16  -- Each tile is 32x32 pixels
 local tilesPerRow = 20  -- Number of tiles per row
 local tilesPerCol = 3    -- Number of tiles per column
-local tileMap -- The tile map and TILE constants
-local rows -- Total rows from the map
-local cols  -- Total columns from the first row
-
-local shrinkStep = 0 -- Tracks how many layers have been converted
 local shrinkTimer = 0 -- Timer to control shrinking speed
 local shrinkDelay = 2 -- Time (in seconds) between each shrink step
+local tileSize = 16  -- Tile size in pixels
 
--- Function to shrink the map clockwise
-local function shrinkMapStep()
-    if tileSheet.WALL == nil then
-        error("ERROR: TILE.WALL is nil! Check map.lua.")
-    end
+-- At the top, rename your constants table:
+local tileSheet
 
-    if shrinkStep >= math.min(math.floor(rows / 2), math.floor(cols / 2)) then
-        return -- Stop shrinking once the center is reached
-    end
+-- Create a new empty tileMap
+local Map = require("map")
+Game.map = Map
 
-    local startRow = shrinkStep + 1
-    local startCol = shrinkStep + 1
-    local endRow = rows - shrinkStep
-    local endCol = cols - shrinkStep
+-- Require the player module
+local Player = require "player"
 
-    -- **Top row (left to right)**
-    for c = startCol, endCol do
-        if tileMap[startRow][c] ~= tileSheet.WALL then
-            tileMap[startRow][c] = tileSheet.WALL
-        end
-    end
+-- Helper function to load the sprite sheet and generate tile quads.
+local function loadTileSheetAndQuads()
+    -- Load the sprite sheet image.
+    tileSheet = love.graphics.newImage("assets/sprites/icons.png")
 
-    -- **Right column (top to bottom)**
-    for r = startRow, endRow do
-        if tileMap[r][endCol] ~= tileSheet.WALL then
-            tileMap[r][endCol] = tileSheet.WALL
-        end
-    end
+    -- This ensures no “bleeding” from adjacent tiles in the sheet.
+    tileSheet:setFilter("nearest", "nearest")
+    tileSheet:setWrap("clamp", "clamp")
 
-    -- **Bottom row (right to left)**
-    for c = endCol, startCol, -1 do
-        if tileMap[endRow][c] ~= tileSheet.WALL then
-            tileMap[endRow][c] = tileSheet.WALL
-        end
-    end
+    tileQuads = {}  -- Reset the quads table.
 
-    -- **Left column (bottom to top)**
-    for r = endRow, startRow, -1 do
-        if tileMap[r][startCol] ~= tileSheet.WALL then
-            tileMap[r][startCol] = tileSheet.WALL
-        end
-    end
-
-    -- Move to the next layer
-    shrinkStep = shrinkStep + 1
-end
-
-
--- Function to reset game state
-function Game.reset()
-    countdown = 3  -- Countdown before game starts
-    countdownTimer = 1  -- Countdown step timer (1 second)
-    gameStarted = false  -- Game state flag
-    gameTime = 30  -- Game duration in seconds (change this back if needed)
-    alarmThreshold = gameTime / 3 -- Time at which to sound alarm
-    alarmTriggered = false -- Flag to check if the alarm has played
-    playerResults = {} -- Reset standings
-end
-
-function Game.load(players)
-    -- Load tileMap and TILE definitions dynamically
-    tileMap, tileSheet = require("map")
-
-    -- Reinitialize tileQuads to avoid stale data
-    tileQuads = {}
-
-    -- Generate quads for all tiles in `icons.png`
+    -- Get the dimensions of the sprite sheet image.
     local imgWidth, imgHeight = tileSheet:getDimensions()
 
+    -- Generate quads for all tiles in the sprite sheet.
     for row = 0, tilesPerCol - 1 do
         for col = 0, tilesPerRow - 1 do
-            local tileIndex = (row * tilesPerRow) + col + 1  -- Convert 2D index to 1D
-            tileQuads[tileIndex] = love.graphics.newQuad(col * tileSize, row * tileSize, tileSize, tileSize, imgWidth, imgHeight)
+            local tileIndex = (row * tilesPerRow) + col + 1  -- Convert 2D index to 1D.
+            tileQuads[tileIndex] = love.graphics.newQuad(
+                col * tileSize, row * tileSize, -- x, y position on the sheet.
+                tileSize, tileSize,             -- Width and height of the quad.
+                imgWidth, imgHeight             -- Full dimensions of the sprite sheet.
+            )
         end
     end
+end
 
-    -- Load game music (only if not already loaded)
+-- Helper function to generate and populate the game map.
+local function loadMap()
+    Game.map:generateMap()  -- Now automatically uses safe zones based on map dimensions.
+    -- If needed, you can also call map:placePowerUps(tileSheet) here.
+end
+
+-- Helper function to load audio assets.
+local function loadAudio()
+    -- Load game music if not already loaded.
     if not gameMusic then
-        gameMusic = love.audio.newSource("assets/music/game_music.ogg", "stream")
+        gameMusic = love.audio.newSource("assets/sounds/music.ogg", "stream")
         gameMusic:setLooping(true)
     end
 
-    -- Load alarm sound (single-play sound effect)
+    -- Load alarm sound if not already loaded.
     if not alarmSound then
-        alarmSound = love.audio.newSource("assets/sfx/alarm.ogg", "static")
+        alarmSound = love.audio.newSource("assets/sounds/alarm.ogg", "static")
         alarmSound:setLooping(true)
     end
 
-    gameMusic:setPitch(1.5)  -- Initial music speed
-
-    -- Store player data for standings screen
-    if type(players) == "table" then
-        playerResults = players
-    else
-        print("WARNING: No player data provided. Using test data.")
-        playerResults = {
-            { name = "Player 1", sprite = nil, score = 100 },
-            { name = "Player 2", sprite = nil, score = 80 },
-            { name = "Player 3", sprite = nil, score = 60 },
-            { name = "Player 4", sprite = nil, score = 40 }
-        }
-    end
-
-    -- Reset the game state variables when loading
-    Game.reset()
+    -- Set the initial pitch for game music.
+    gameMusic:setPitch(1.5)
 end
 
+-- Helper function to spawn players
+local function spawnPlayers()
+    local numPlayers = GameSettings.players
+    local spawnPositions = Spawns:getSpawnPositions(numPlayers, Game.map)
+
+    Game.players = {}
+    for i = 1, numPlayers do
+        local p = Player:new(i)
+        p.x = spawnPositions[i].x
+        p.y = spawnPositions[i].y
+        table.insert(Game.players, p)
+    end
+end
+
+-- Main load function for the Game module.
+function Game.load()
+    -- Load sprite sheet and generate quads.
+    loadTileSheetAndQuads()
+    -- Build the game map.
+    loadMap()
+    -- Load audio assets.
+    loadAudio()
+    -- Spawn the playuers
+    spawnPlayers()
+    -- Reset game state variables (countdown, game time, etc.).
+    Game.reset()
+end
 
 function Game.update(dt)
     if not gameStarted then
@@ -165,38 +142,17 @@ function Game.update(dt)
             shrinkTimer = shrinkTimer + dt
             if shrinkTimer >= shrinkDelay then
                 shrinkTimer = 0 -- Reset timer
-                shrinkMapStep() -- Shrink the map
+                Game.map:shrinkMapStep() -- Shrink the map
             end
+        end
+
+        -- Update each player in Game.players
+        for _, p in ipairs(Game.players) do
+            p:update(dt)
         end
     else
         -- Game Over (time runs out)
         Game.exitToStandings()
-    end
-end
-
-function Game.exitToMenu()
-    gameStarted = false
-    gameMusic:stop()
-    alarmTriggered = false
-    alarmSound:stop()
-    Game.reset()  -- Ensure everything is reset before returning to the menu
-    switchState(require("main_menu")) -- Return to menu
-end
-
-function Game.exitToStandings()
-    gameStarted = false
-    gameMusic:stop()
-    alarmTriggered = false
-    alarmSound:stop()
-    Game.reset()  -- Ensure everything is reset before returning to the standings
-
-    local standings = require("standings")
-    if standings and standings.load then
-        print("DEBUG: Passing player data to standings.load()")
-        standings.load(playerResults) -- Pass player standings
-        switchState(standings) -- Transition to standings screen
-    else
-        print("ERROR: standings.load() not found!")
     end
 end
 
@@ -215,56 +171,96 @@ function Game.draw()
         -- Countdown text
         local countdownText = tostring(countdown)
         love.graphics.setColor(UITheme.highlightColor)
-        love.graphics.printf(countdownText, 0, love.graphics.getHeight() / 2, love.graphics.getWidth(), "center")
+        love.graphics.printf(countdownText, 0, VIRTUAL_HEIGHT / 2, VIRTUAL_WIDTH, "center")
         love.graphics.setColor(1, 1, 1, 1)
     elseif gameTime > 0 then
         -- Display remaining game time
         local minutes = math.floor(gameTime / 60)
         local seconds = math.floor(gameTime % 60)
-        love.graphics.printf(string.format("TIME LEFT: %02d:%02d", minutes, seconds), 0, 20, love.graphics.getWidth(), "center")
+        love.graphics.printf(string.format("TIME LEFT: %02d:%02d", minutes, seconds), 0, 20, VIRTUAL_WIDTH, "center")
 
         -- Game logic UI
-        --love.graphics.printf("GAME RUNNING...", 0, love.graphics.getHeight() / 2, love.graphics.getWidth(), "center")
+        --love.graphics.printf("GAME RUNNING...", 0, love.graphics.getHeight() / 2, VIRTUAL_WIDTH, "center")
 
         -- **DRAW TILE MAP ONLY IF THE GAME HAS STARTED**
         if gameStarted then
-            local screenWidth = love.graphics.getWidth()
-            local screenHeight = love.graphics.getHeight()
+            local screenWidth = VIRTUAL_WIDTH
+            local screenHeight = VIRTUAL_HEIGHT
 
             -- Get arena size in pixels
-            local arenaWidth = #tileMap[1] * tileSize
-            local arenaHeight = #tileMap * tileSize
+            local arenaWidth = #Game.map.tileMap[1] * tileSize
+            local arenaHeight = #Game.map.tileMap * tileSize
 
             -- Calculate centered position
             local offsetX = (screenWidth - arenaWidth) / 2
             local offsetY = (screenHeight - arenaHeight) / 2
 
             -- Draw Tile Map Centered
-            for row = 1, #tileMap do
-                for col = 1, #tileMap[row] do
-                    local tile = tileMap[row][col]
+            for row = 1, #Game.map.tileMap do
+                for col = 1, #Game.map.tileMap[row] do
+                    local tile = Game.map.tileMap[row][col]
                     if tileQuads[tile] then  -- If it's a valid tile
-                        love.graphics.draw(tileSheet, tileQuads[tile], offsetX + (col - 1) * tileSize, offsetY + (row - 1) * tileSize)
+                        love.graphics.draw(tileSheet, tileQuads[tile],
+                            offsetX + (col - 1) * tileSize,
+                            offsetY + (row - 1) * tileSize)
                     end
                 end
             end
         end
-    else
-        -- Display "Time's Up!" message when time runs out
-        love.graphics.printf("TIME'S UP!", 0, love.graphics.getHeight() / 2, love.graphics.getWidth(), "center")
+        if gameStarted then
+            -- Draw each player in Game.players
+            for _, p in ipairs(Game.players) do
+                p:draw()
+            end
+        end
     end
 end
-
 
 function Game.keypressed(key)
     if gameStarted and gameTime > 0 then
         if key == "escape" then
             Game.exitToMenu()  -- Use new function to properly reset and exit
         end
+        -- Iterate over all players and pass the key event to each one.
+        for _, p in ipairs(Game.players) do
+            p:keypressed(key)
+        end
     elseif gameTime <= 0 then
         -- Return to menu when game ends
         Game.exitToMenu()
     end
+end
+
+function Game.exitToMenu()
+    gameStarted = false
+    gameMusic:stop()
+    alarmTriggered = false
+    alarmSound:stop()
+    Game.reset()  -- Ensure everything is reset before returning to the menu
+    switchState(require("menu")) -- Return to menu
+end
+
+function Game.exitToStandings()
+    gameStarted = false
+    gameMusic:stop()
+    alarmTriggered = false
+    alarmSound:stop()
+    Game.reset()  -- Ensure everything is reset before returning to the standings
+
+    local standings = require("standings")
+    standings.load(playerResults) -- Pass player standings
+    switchState(standings) -- Transition to standings screen
+end
+
+-- Function to reset game state
+function Game.reset()
+    countdown = 3  -- Countdown before game starts
+    countdownTimer = 1  -- Countdown step timer (1 second)
+    gameStarted = false  -- Game state flag
+    gameTime = 30  -- Game duration in seconds (change this back if needed)
+    alarmThreshold = gameTime / 3 -- Time at which to sound alarm
+    alarmTriggered = false -- Flag to check if the alarm has played
+    playerResults = {} -- Reset standings
 end
 
 return Game

@@ -1,3 +1,6 @@
+-- standings.lua
+require("globals")
+
 standings = {}
 
 local standingsTime = 3  -- Time to display the standings screen
@@ -16,7 +19,7 @@ function standings.load(players)
 
     -- Play sound only if not already playing
     if not soundEffect then
-        soundEffect = love.audio.newSource("assets/sfx/bingo.ogg", "stream")
+        soundEffect = love.audio.newSource("assets/sounds/bingo.ogg", "stream")
         soundEffect:setLooping(false)
         soundEffect:play()
     end
@@ -30,7 +33,7 @@ function standings.update(dt)
             soundEffect:stop()
         end
         print("loading wheel o fortune")
-        local wheelOfFortune = require("wheel_of_fortune")
+        local wheelOfFortune = require("wheelofortune")
         if wheelOfFortune and wheelOfFortune.load then
             wheelOfFortune.load(standingsData)  -- Pass player data
             switchState(wheelOfFortune)
@@ -43,11 +46,11 @@ end
 function standings.draw()
     love.graphics.setBackgroundColor(0, 0, 0) -- Normal black background
     love.graphics.setColor(0, 0, 1)  -- Blue color for text
-    love.graphics.printf("STANDINGS", 0, 20, love.graphics.getWidth(), "center")
+    love.graphics.printf("STANDINGS", 0, 20, VIRTUAL_WIDTH, "center")
 
     if type(standingsData) ~= "table" or #standingsData == 0 then
         love.graphics.setColor(1, 0, 0)  -- Red for error message
-        love.graphics.printf("NO PLAYER DATA AVAILABLE!", 0, 60, love.graphics.getWidth(), "center")
+        love.graphics.printf("NO PLAYER DATA AVAILABLE!", 0, 60, VIRTUAL_WIDTH, "center")
         return
     end
 
