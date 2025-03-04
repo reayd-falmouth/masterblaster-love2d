@@ -1,0 +1,133 @@
+name: Build and Release to Itch.io
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - '*'  # Runs on any tag push
+
+jobs:
+  build-zip:
+    name: Build .love File
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Create .love File
+        run: |
+          cd src/masterblaster
+          zip -9 -r ../../masterblaster.love .
+          cd ../..
+
+      - name: Upload .love Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: masterblaster-love
+          path: masterblaster.love
+
+  build:
+    needs: build-zip
+    name: Build LÖVE Executable
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        include:
+          - os: ubuntu-latest
+            artifact_name: masterblaster-windows
+            output_file: masterblaster-11.5-win64.zip
+            channel: windows
+          - os: macos-latest
+            artifact_name: masterblaster-mac
+            output_file: masterblaster-mac.zip
+            channel: mac
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Download .love Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: masterblaster-love
+          path: .
+
+      - name: Install Dependencies (Ubuntu)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y zip unzip wget
+
+      - name: Build Windows Executable
+        if: runner.os == 'Linux'
+        run: bash src/scripts/build_windows.sh 11.5 win64
+
+      - name: Upload Windows Artifact
+        if: runner.os == 'Linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: masterblaster-windows
+          path: masterblaster-11.5-win64.zip
+
+      - name: Install LÖVE (macOS)
+        if: runner.os == 'macOS'
+        run: brew install --cask love
+
+      - name: Build macOS Application Bundle
+        if: runner.os == 'macOS'
+        run: |
+          mkdir ChaosBomber.app
+          cp -R /Applications/love.app/Contents ChaosBomber.app/
+          cp masterblaster.love ChaosBomber.app/Contents/Resources/
+          plutil -replace CFBundleName -string "ChaosBomber" ChaosBomber.app/Contents/Info.plist
+          plutil -replace CFBundleIdentifier -string "com.yourdomain.masterblaster" ChaosBomber.app/Contents/Info.plist
+          plutil -replace CFBundleExecutable -string "love" ChaosBomber.app/Contents/Info.plist
+
+      - name: Compress macOS Application
+        if: runner.os == 'macOS'
+        run: zip -9 -r masterblaster-mac.zip ChaosBomber.app
+
+      - name: Upload macOS Artifact
+        if: runner.os == 'macOS'
+        uses: actions/upload-artifact@v4
+        with:
+          name: masterblaster-mac
+          path: masterblaster-mac.zip
+
+  release:
+    name: Release to Itch.io
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Download Windows Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: masterblaster-windows
+          path: build/windows
+
+      - name: Download macOS Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: masterblaster-mac
+          path: build/mac
+
+      - name: Deploy Windows Build to Itch.io
+        uses: robpc/itchio-upload-action@v1
+        with:
+          path: build/windows/masterblaster-11.5-win64.zip
+          project: ${{ secrets.ITCHIO_PROJECT }}
+          channel: windows
+          version: ${{ github.ref_name }}
+          api-key: ${{ secrets.ITCHIO_API_KEY }}
+
+      - name: Deploy macOS Build to Itch.io
+        uses: robpc/itchio-upload-action@v1
+        with:
+          path: build/mac/masterblaster-mac.zip
+          project: ${{ secrets.ITCHIO_PROJECT }}
+          channel: mac
+          version: ${{ github.ref_name }}
+          api-key: ${{ secrets.ITCHIO_API_KEY }}
