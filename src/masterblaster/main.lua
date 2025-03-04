@@ -1,11 +1,20 @@
 require("globals")
+local Audio = require("audio")
 local Title = require("title")
-local currentState = Title
+local Menu = require("menu")
+local currentState = Menu
 
 -- These variables will be computed on window resize
 local scale, offsetX, offsetY = 1, 0, 0
 
 function love.load()
+    -- Initialize all references
+    audio.load()
+
+    -- Set initial volumes if you want
+    audio.setMusicVolume(0.8)
+    audio.setSFXVolume(1.0)
+
     if currentState.load then
         currentState.load()
     end
@@ -49,6 +58,24 @@ function love.draw()
 end
 
 function love.keypressed(key)
+    -- Toggle music if 'm' is pressed
+    if key == "m" then
+        if audio.getMusicVolume() > 0 then
+            audio.setMusicVolume(0)
+        else
+            audio.setMusicVolume(1.0)
+        end
+    end
+
+    -- Toggle SFX if 'n' is pressed
+    if key == "n" then
+        if audio.getSFXVolume() > 0 then
+            audio.setSFXVolume(0)
+        else
+            audio.setSFXVolume(1.0)
+        end
+    end
+
     if currentState.keypressed then
         currentState.keypressed(key)
     end

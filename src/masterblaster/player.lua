@@ -1,68 +1,42 @@
+-- player.lua
+local Assets = require("assets")  -- global asset reference
 local Player = {}
 Player.__index = Player
 
-local spriteSheet = love.graphics.newImage("assets/sprites/player.png")
+local spriteSheet = Assets.playerSpriteSheet
 local SPRITE_WIDTH, SPRITE_HEIGHT = 32, 22
-local ROW1_FRAME_COUNT = 10  -- frames 1 to 10 on the first row
-local GAP = 1  -- one pixel gap between rows
+local ROW_FRAME_COUNT = 10
+local GAP = 1
 
--- Returns the 16x16 collision box based on the player's bottom-center point.
-function Player:getCollisionBox()
-    return self.x - 8, self.y - 16, 16, 16 -- (x, y, width, height)
-end
+local COLLIDER_RADIUS = 7
 
--- Checks for collision against the shared map's solid tiles from Game.map.
-function Player:checkCollision(newX, newY)
-    local bx, by, bw, bh = newX - 8, newY - 16, 16, 16  -- Future collision box
+local deathSound = love.audio.newSource("assets/sounds/die.ogg", "static")
 
-    if Game.map and Game.map.solidTiles then
-        for _, obj in ipairs(Game.map.solidTiles) do
-            local ox, oy, ow, oh = obj.x, obj.y, obj.width, obj.height
-            if bx < ox + ow and bx + bw > ox and by < oy + oh and by + bh > oy then
-                return true  -- Collision detected
-            end
-        end
-    end
-
-    return false  -- No collision
-end
-
--- Example Player constructor including player-specific animation state
 function Player:new(playerIndex)
     local self = setmetatable({}, Player)
     self.index = playerIndex or 1
+
+    -- Calculate vertical offset for this player's row in the sheet.
     self.baseYOffset = (self.index - 1) * (3 * SPRITE_HEIGHT + 3)
     self.spriteSheet = spriteSheet
 
-    local function getQuadWithOffset(frame)
-        local x, y
-        if frame <= ROW1_FRAME_COUNT then
-            x = (frame - 1) * SPRITE_WIDTH
-            y = self.baseYOffset
-        else
-            x = (frame - ROW1_FRAME_COUNT - 1) * SPRITE_WIDTH
-            y = self.baseYOffset + SPRITE_HEIGHT + GAP
-        end
-        return love.graphics.newQuad(x, y, SPRITE_WIDTH, SPRITE_HEIGHT, spriteSheet:getDimensions())
-    end
-
-    local function generateAnimation(startFrame, endFrame)
-        local anim = {}
-        for frame = startFrame, endFrame do
-            table.insert(anim, getQuadWithOffset(frame))
-        end
-        return anim
-    end
-
+    -- Animations table
     self.animations = {
-        moveDown  = generateAnimation(1, 3),
-        moveRight = generateAnimation(4, 6),
-        moveLeft  = generateAnimation(7, 9),
-        moveUp    = generateAnimation(10, 12),
-        die       = generateAnimation(13, 21),
-        remote    = generateAnimation(22, 24)
+        moveDown  = Assets.generateAnimation(1, 3,  self.baseYOffset, ROW_FRAME_COUNT,
+                                             SPRITE_WIDTH, SPRITE_HEIGHT, GAP, spriteSheet),
+        moveRight = Assets.generateAnimation(4, 6,  self.baseYOffset, ROW_FRAME_COUNT,
+                                             SPRITE_WIDTH, SPRITE_HEIGHT, GAP, spriteSheet),
+        moveLeft  = Assets.generateAnimation(7, 9,  self.baseYOffset, ROW_FRAME_COUNT,
+                                             SPRITE_WIDTH, SPRITE_HEIGHT, GAP, spriteSheet),
+        moveUp    = Assets.generateAnimation(10,12, self.baseYOffset, ROW_FRAME_COUNT,
+                                             SPRITE_WIDTH, SPRITE_HEIGHT, GAP, spriteSheet),
+        die       = Assets.generateAnimation(13,21, self.baseYOffset, ROW_FRAME_COUNT,
+                                             SPRITE_WIDTH, SPRITE_HEIGHT, GAP, spriteSheet),
+        remote    = Assets.generateAnimation(22,24, self.baseYOffset, ROW_FRAME_COUNT,
+                                             SPRITE_WIDTH, SPRITE_HEIGHT, GAP, spriteSheet)
     }
 
+    -- Default animation
     self.currentAnimation = self.animations.moveDown
     self.currentFrame = 1
     self.frameDuration = 0.1
@@ -72,8 +46,8 @@ function Player:new(playerIndex)
     self.y = 100
     self.speed = 50
 
-    self.fireBlastX = 1
-    self.fireBlastY = 1
+    -- Power-ups & flags
+    self.power = 0
     self.superman = false
     self.yingyang = false
     self.ghost = false
@@ -82,57 +56,113 @@ function Player:new(playerIndex)
     self.stopped = false
     self.remote = false
 
+    -- Physics collider
+    self.collider = Game.world:newCircleCollider(
+        self.x - (COLLIDER_RADIUS / 2),
+        self.y - COLLIDER_RADIUS,
+        COLLIDER_RADIUS
+    )
+    self.collider:setFixedRotation(true)
+    self.collider:setObject(self)
+    self.collider:setFriction(0)
+    self.collider:setCollisionClass('Player')
+
+    -- Death / removal flags
+    self.isDead = false
+    self.toRemove = false
+
     return self
 end
 
--- Update the player's movement and animation while checking collisions against the shared map.
 function Player:update(dt)
-    if self.stopped then return end
+    -- If we've already flagged for removal, skip updates entirely
+    if self.toRemove then return end
 
-    local moving = false
-    local newX, newY = self.x, self.y  -- Predict new position
-
-    if love.keyboard.isDown("up") then
-        newY = self.y - self.speed * dt
-        self.currentAnimation = self.animations.moveUp
-        moving = true
-    elseif love.keyboard.isDown("down") then
-        newY = self.y + self.speed * dt
-        self.currentAnimation = self.animations.moveDown
-        moving = true
-    elseif love.keyboard.isDown("left") then
-        newX = self.x - self.speed * dt
-        self.currentAnimation = self.animations.moveLeft
-        moving = true
-    elseif love.keyboard.isDown("right") then
-        newX = self.x + self.speed * dt
-        self.currentAnimation = self.animations.moveRight
-        moving = true
+    -- Check collision with a Fireball if collider still exists
+    if self.collider and self.collider:enter("Fireball") then
+        self:die()  -- Switch to death logic
     end
 
-    -- Only update position if the new position does not collide with a wall.
-    if moving and not self:checkCollision(newX, newY) then
-        self.x, self.y = newX, newY
-    end
-
-    if moving then
+    -- If the player is dead, just run the death animation
+    if self.isDead then
         self.animationTimer = self.animationTimer + dt
         if self.animationTimer >= self.frameDuration then
             self.animationTimer = self.animationTimer - self.frameDuration
-            self.currentFrame = (self.currentFrame % #self.currentAnimation) + 1
+            self.currentFrame = self.currentFrame + 1
+
+            -- If the death animation finishes, mark the player for removal
+            if self.currentFrame > #self.animations.die then
+                self.toRemove = true
+            end
         end
-    else
-        self.currentFrame = 1
-        self.animationTimer = 0
+        return
+    end
+
+    -- If the player is "stopped" for other reasons, skip movement
+    if self.stopped then return end
+
+    -- Only do movement if collider exists
+    if self.collider then
+        local vx, vy = 0, 0
+        local moving = false
+
+        if love.keyboard.isDown("up") then
+            vy = vy - self.speed
+            self.currentAnimation = self.animations.moveUp
+            moving = true
+        elseif love.keyboard.isDown("down") then
+            vy = vy + self.speed
+            self.currentAnimation = self.animations.moveDown
+            moving = true
+        end
+
+        if love.keyboard.isDown("left") then
+            vx = vx - self.speed
+            self.currentAnimation = self.animations.moveLeft
+            moving = true
+        elseif love.keyboard.isDown("right") then
+            vx = vx + self.speed
+            self.currentAnimation = self.animations.moveRight
+            moving = true
+        end
+
+        -- Apply velocity
+        self.collider:setLinearVelocity(vx, vy)
+
+        -- Update logical (x, y) from collider’s position
+        local cx, cy = self.collider:getPosition()
+        self.x = cx
+        self.y = cy + COLLIDER_RADIUS
+
+        -- Advance animation if moving
+        if moving then
+            self.animationTimer = self.animationTimer + dt
+            if self.animationTimer >= self.frameDuration then
+                self.animationTimer = self.animationTimer - self.frameDuration
+                self.currentFrame = (self.currentFrame % #self.currentAnimation) + 1
+            end
+        else
+            self.currentFrame = 1
+            self.animationTimer = 0
+        end
     end
 end
 
--- Draw the current frame of the player.
-function Player:draw()
-    love.graphics.draw(self.spriteSheet, self.currentAnimation[self.currentFrame], self.x, self.y)
+function Player:draw(offsetX, offsetY)
+    offsetX = offsetX or 0
+    offsetY = offsetY or 0
+
+    -- If flagged for removal, skip drawing
+    if self.toRemove then return end
+
+    local drawX = offsetX + (self.x - SPRITE_WIDTH / 2)
+    local drawY = offsetY + (self.y - SPRITE_HEIGHT)
+
+    -- Draw the current frame
+    local quad = self.currentAnimation[self.currentFrame]
+    love.graphics.draw(self.spriteSheet, quad, drawX, drawY)
 end
 
--- Handle key presses (e.g., to drop a bomb).
 function Player:keypressed(key)
     if key == "space" then
         self:dropBomb()
@@ -142,8 +172,13 @@ end
 function Player:dropBomb()
     if self.remote then
         print("Remote bomb activated: use cursor keys to move the bomb.")
+        -- Implement remote bomb logic if needed
     else
-        print("Bomb dropped at (" .. self.x .. ", " .. self.y .. ")")
+        local Bomb = require("bomb")
+        local bomb = Bomb:new(self)
+        if not Game.bombs then Game.bombs = {} end
+        table.insert(Game.bombs, bomb)
+        print("Bomb dropped at (" .. bomb.x .. ", " .. bomb.y .. ")")
     end
 end
 
@@ -154,6 +189,27 @@ function Player:setAnimation(animName)
         self.animationTimer = 0
     else
         print("Animation " .. animName .. " not found.")
+    end
+end
+
+-- Called once when the player dies
+function Player:die()
+    -- Prevent re-running if already dead
+    if self.isDead then return end
+
+    self.isDead = true
+    self.stopped = true
+    deathSound:play()
+
+    -- Switch to the "die" animation frames
+    self.currentAnimation = self.animations.die
+    self.currentFrame = 1
+    self.animationTimer = 0
+
+    -- Destroy the collider so the dead player won't collide anymore
+    if self.collider then
+        self.collider:destroy()
+        self.collider = nil
     end
 end
 

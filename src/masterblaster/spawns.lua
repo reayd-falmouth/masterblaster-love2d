@@ -4,7 +4,11 @@ local Spawns = {}
 function Spawns:getSpawnPositions(numPlayers, map)
     local candidates = {}
 
-    if numPlayers == 2 then
+    if numPlayers == 1 then
+        candidates = {
+            { name = "topLeft",     grid = {1, 1} },
+        }
+    elseif numPlayers == 2 then
         candidates = {
             { name = "topLeft",     grid = {1, 1} },
             { name = "bottomRight", grid = { map.cols, map.rows } },
@@ -33,8 +37,7 @@ function Spawns:getSpawnPositions(numPlayers, map)
     end
 
     local spawnPositions = {}
-    local offsetX, offsetY = map:getDrawOffset()
-    local tileSize = map.tileSize or 32  -- Ensure tile size is correctly defined
+    local tileSize = map.tileSize or 16  -- Ensure tile size is correctly defined
 
     for i, candidate in ipairs(candidates) do
         local gx, gy = candidate.grid[1], candidate.grid[2]
@@ -43,8 +46,8 @@ function Spawns:getSpawnPositions(numPlayers, map)
         if candidate.name == "middle" then
             local centerX, centerY = map:gridToWorld(math.floor(map.cols / 2), math.floor(map.rows / 2))
             spawnPositions[i] = {
-                x = centerX + offsetX + (tileSize / 2),
-                y = centerY + offsetY + (tileSize / 2)
+                x = centerX + (tileSize / 2),
+                y = centerY + (tileSize / 2)
             }
         else
             -- For all other players, check if the tile is occupied
@@ -56,8 +59,8 @@ function Spawns:getSpawnPositions(numPlayers, map)
 
             -- Apply centering only for non-middle players
             spawnPositions[i] = {
-                x = worldX + offsetX - (tileSize / 2),
-                y = worldY + offsetY - (tileSize / 2)
+                x = worldX + (tileSize / 2),
+                y = worldY + (tileSize / 2)
             }
         end
     end
