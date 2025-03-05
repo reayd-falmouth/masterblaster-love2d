@@ -100,52 +100,6 @@ local function dumpObjectInfo(obj)
     print("=== End dump ===")
 end
 
---local function safeGetObject(collider)
---    if not collider then
---        print("safeGetObject: collider is nil")
---        return nil
---    end
---
---    if collider.getObject then
---        local obj = collider:getObject()
---        if obj then
---            return obj
---        end
---    end
---
---    if collider.getUserData then
---        local ud = collider:getUserData()
---        if not ud then
---            print("safeGetObject: collider returned nil via getUserData")
---        end
---        return ud
---    end
---
---    print("safeGetObject: collider has neither getObject nor getUserData")
---    return nil
---end
---
---
---
---
---local function beginContact(a, b, coll)
---    local objA = safeGetObject(a)
---    local objB = safeGetObject(b)
---
---    if not objA or not objB then
---        return
---    end
---
---    if a:getCollisionClass() == "Player" and b:getCollisionClass() == "Item" then
---        objA:applyItemEffect(objB)
---        objB:removeItem()
---    elseif a:getCollisionClass() == "Item" and b:getCollisionClass() == "Player" then
---        objB:applyItemEffect(objA)
---        objA:removeItem()
---    end
---end
-
-
 local function endContact(a, b, coll)
     -- Optional: Code to run when two colliders separate.
 end
@@ -260,18 +214,19 @@ function Game.reset()
 
     -- Register your collision classes
     Game.world:addCollisionClass('Player', { enters = {'Fireball'} })
-    Game.world:addCollisionClass('Block', { enters = {'Fireball'} })
     Game.world:addCollisionClass('Fireball', { enters = {'Block', 'Item'} })
+    Game.world:addCollisionClass('Block', { enters = {'Fireball'} })
     Game.world:addCollisionClass('Bomb', { enters = {'Fireball'} })
-    Game.world:addCollisionClass('Item', { enters = {'Player', 'Fireball', 'PlayerInvincible'} })
     Game.world:addCollisionClass('PlayerInvincible', { ignores = {'Fireball'}})
+    Game.world:addCollisionClass('PlayerInvisible', { ignores = {'Block'}})
+    Game.world:addCollisionClass('Item', { enters = {'Player', 'Fireball', 'PlayerInvincible', 'PlayerInvisible'} })
     -- Register the collision callbacks with the physics world.
 
     -- Reset other game state variables:
     countdown = 3
     countdownTimer = 1
     gameStarted = false
-    gameTime = 60
+    gameTime = 600
     alarmThreshold = gameTime / 3
     alarmTriggered = false
     playerResults = {}

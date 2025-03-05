@@ -16,9 +16,9 @@ local ITEM_DEFINITIONS = {
   { name = "bomb",        row = 2, col = 20, weight = 10 },
   { name = "power",       row = 3, col = 1,  weight = 10 },
   { name = "superman",    row = 3, col = 2,  weight = 3 },
-  { name = "yingyang",    row = 3, col = 4,  weight = 50, duration = 15 }, -- 5 seconds duration
-  { name = "phase",       row = 3, col = 5,  weight = 5,  duration = 15 },
-  { name = "ghost",       row = 3, col = 6,  weight = 4,  duration = 15 },
+  { name = "yingyang",    row = 3, col = 4,  weight = 5, duration = 10 }, -- 5 seconds duration
+  { name = "invisible",       row = 3, col = 5,  weight = 50,  duration = 10 },
+  --{ name = "ghost",       row = 3, col = 6,  weight = 0,  duration = 15 },
   { name = "speed",       row = 3, col = 7,  weight = 10 },
   { name = "death",       row = 3, col = 8,  weight = 5 },
   { name = "special",     row = 3, col = 9, weight = 2 },
@@ -34,6 +34,8 @@ local ITEM_DEFINITIONS = {
 local spriteSheet = Assets.objectSpriteSheet
 
 -- Load the explosion sound.
+local pickupSound = Audio.sfxSources.bingo22
+local ooLaLaSound = Audio.sfxSources.bingo
 local bubbleSound = Audio.sfxSources.bubble
 local cashSound = Audio.sfxSources.cash
 local goSound = Audio.sfxSources.go
@@ -56,10 +58,14 @@ local function playItemSound(name)
         cashSound:play()
     elseif name == "speed" then
         goSound:play()
-    elseif name == "bomb" or name == "power" or name == "superman" or name == "special" then
+    elseif name == "bomb" or name == "power" then
+        pickupSound:play()
+    elseif name == "superman" or name == "special" then
         bubbleSound:play()
-    elseif name == "yingyang" or name == "phase" or name == "ghost" then
+    elseif name == "invisible" then
         warpSound:play()
+    elseif name == "yingyang" then
+        ooLaLaSound:play()
     end
 end
 
