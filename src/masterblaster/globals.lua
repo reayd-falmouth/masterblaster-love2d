@@ -1,4 +1,5 @@
 -- globals.lua
+VERSION = "v1.0"
 VIRTUAL_WIDTH = 640
 VIRTUAL_HEIGHT = 512
 ENABLE_MUSIC = false
