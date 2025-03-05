@@ -1,12 +1,12 @@
 -- block.lua
 local Assets = require("assets")
+local Item = require("item")  -- Require the new items module
 local Block = {}
 Block.__index = Block
 
 local spriteSheet = Assets.objectSpriteSheet
 
--- This is the set of quads for the destruction animation;
--- You could also call it "blockAnimation" if it's the same.
+-- Destruction animation for the block
 local destructionAnimation = Assets.generateAnimation(
     10, 14,  -- start and end frame indices in the spritesheet
     16, 20,  -- source X, Y offset within sheet
@@ -27,7 +27,6 @@ function Block:new(row, col, tileSize, tileID, isDestructible)
     self.tileID = tileID
     self.isDestructible = isDestructible
 
-    -- Animation setup
     self.destructionAnimation = destructionAnimation
     self.frameDuration = FRAME_DURATION
     self.currentFrame = 1
@@ -35,22 +34,23 @@ function Block:new(row, col, tileSize, tileID, isDestructible)
     self.destroying = false
     self.toRemove = false
 
-    -- Calculate actual (x,y) based on row/col
-    local x = (col - 1) * tileSize
-    local y = (row - 1) * tileSize
+    -- Calculate actual (x,y) based on row/col and store as instance variables.
+    self.x = (col - 1) * tileSize
+    self.y = (row - 1) * tileSize
 
-    -- Create Box2D collider
-    self.collider = Game.world:newRectangleCollider(x, y, tileSize, tileSize)
+    -- Create Box2D collider using stored x and y
+    self.collider = Game.world:newRectangleCollider(self.x, self.y, tileSize, tileSize)
     self.collider:setCollisionClass("Block")
     self.collider:setType("static")
     self.collider:setSensor(false)
     self.collider:setObject(self)
+    --self.collider:setUserData(self)
 
     return self
 end
 
 function Block:update(dt)
-    -- If we are currently playing a destruction animation
+    -- Play destruction animation if active
     if self.destroying then
         self.animationTimer = self.animationTimer + dt
         if self.animationTimer >= self.frameDuration then
@@ -61,7 +61,7 @@ function Block:update(dt)
             if self.currentFrame > #self.destructionAnimation then
                 self.toRemove = true
 
-                -- Now remove from blockMap
+                -- Remove from blockMap
                 if Game.blockMap[self.row] and Game.blockMap[self.row][self.col] == self then
                     Game.blockMap[self.row][self.col] = nil
                 end
@@ -71,20 +71,18 @@ function Block:update(dt)
 end
 
 function Block:draw(tileQuads)
-    -- If flagged to remove, don’t draw at all
     if self.toRemove then return end
 
-    local x = (self.col - 1) * self.tileSize
-    local y = (self.row - 1) * self.tileSize
+    -- Use stored coordinates for drawing
+    local x = self.x
+    local y = self.y
 
-    -- If we’re in the midst of a destruction animation:
     if self.destroying then
         local frameQuad = self.destructionAnimation[self.currentFrame]
         if frameQuad then
             love.graphics.draw(spriteSheet, frameQuad, x, y)
         end
     else
-        -- Otherwise, just draw the regular tile
         local quad = tileQuads[self.tileID]
         if quad then
             love.graphics.draw(spriteSheet, quad, x, y)
@@ -100,7 +98,14 @@ function Block:destroyBlock()
         self.currentFrame = 1
         self.animationTimer = 0
 
-        -- Remove collider so we no longer block anything
+        -- Spawn an item at this block's location using the new module.
+        local newItem = Item:spawn(self.x, self.y)
+        if newItem then
+            print("New item spawned: ", newItem.type)
+            table.insert(Game.items, newItem)
+        end
+
+        -- Remove collider so the block no longer obstructs movement
         if self.collider then
             self.collider:destroy()
             self.collider = nil
@@ -110,8 +115,6 @@ function Block:destroyBlock()
         if Game.map.tileMap[self.row] then
             Game.map.tileMap[self.row][self.col] = Game.map.tileIDs.EMPTY
         end
-
-        -- Don't remove from blockMap here, we let the animation finish first.
     end
 end
 

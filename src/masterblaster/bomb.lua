@@ -77,7 +77,10 @@ function Bomb:new(player)
         toRemove = false
     }
     bomb.collider:setSensor(true)  -- Disable collision initially.
+    bomb.collider:setType("static")
     bomb.collider:setCollisionClass("Bomb")
+    bomb.collider:setObject(bomb)
+    --bomb.collider:setUserData(bomb)
     setmetatable(bomb, Bomb)
     return bomb
 end

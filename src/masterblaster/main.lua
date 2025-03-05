@@ -1,4 +1,5 @@
 require("globals")
+LOGGER = require("logging")
 local Audio = require("audio")
 local Title = require("title")
 local Menu = require("menu")
