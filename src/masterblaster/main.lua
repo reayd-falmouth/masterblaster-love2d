@@ -9,7 +9,7 @@ local currentState = Menu
 local scale, offsetX, offsetY = 1, 0, 0
 
 function love.load()
-    local iconData = love.image.newImageData("assets/images/icon_16x.png")
+    local iconData = love.image.newImageData("assets/images/icon_32x.png")
     love.window.setIcon(iconData)
 
     -- Initialize all references
