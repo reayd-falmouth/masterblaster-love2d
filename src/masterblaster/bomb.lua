@@ -1,4 +1,5 @@
 local Assets = require("assets")
+local Audio = require("audio")
 local Fireball = require("fireball")
 local Bomb = {}
 Bomb.__index = Bomb
@@ -36,7 +37,7 @@ local FRAME_DURATION = 0.3  -- Seconds per frame.
 local tileSize = 16
 
 -- Load the explosion sound.
-local explosionSound = love.audio.newSource("assets/sounds/explode.ogg", "static")
+local explosionSound = Audio.sfxSources.explode
 
 -- Local helper function to spawn a fireBall entity.
 local function spawnFireBall(x, y, delay)

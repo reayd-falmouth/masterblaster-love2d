@@ -9,11 +9,11 @@ local scale, offsetX, offsetY = 1, 0, 0
 
 function love.load()
     -- Initialize all references
-    audio.load()
+    Audio.load()
 
     -- Set initial volumes if you want
-    audio.setMusicVolume(0.8)
-    audio.setSFXVolume(1.0)
+    Audio.setMusicVolume(0.8)
+    Audio.setSFXVolume(1.0)
 
     if currentState.load then
         currentState.load()
@@ -60,19 +60,19 @@ end
 function love.keypressed(key)
     -- Toggle music if 'm' is pressed
     if key == "m" then
-        if audio.getMusicVolume() > 0 then
-            audio.setMusicVolume(0)
+        if Audio.getMusicVolume() > 0 then
+            Audio.setMusicVolume(0)
         else
-            audio.setMusicVolume(1.0)
+            Audio.setMusicVolume(1.0)
         end
     end
 
     -- Toggle SFX if 'n' is pressed
     if key == "n" then
-        if audio.getSFXVolume() > 0 then
-            audio.setSFXVolume(0)
+        if Audio.getSFXVolume() > 0 then
+            Audio.setSFXVolume(0)
         else
-            audio.setSFXVolume(1.0)
+            Audio.setSFXVolume(1.0)
         end
     end
 

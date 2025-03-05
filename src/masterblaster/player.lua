@@ -1,5 +1,6 @@
 -- player.lua
 local Assets = require("assets")  -- global asset reference
+local Audio = require("audio")
 local Player = {}
 Player.__index = Player
 
@@ -10,7 +11,7 @@ local GAP = 1
 
 local COLLIDER_RADIUS = 7
 
-local deathSound = love.audio.newSource("assets/sounds/die.ogg", "static")
+local deathSound = Audio.sfxSources.die
 
 function Player:new(playerIndex)
     local self = setmetatable({}, Player)

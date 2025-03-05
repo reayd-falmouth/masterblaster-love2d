@@ -7,6 +7,7 @@ local Map = require("map")
 local Player = require "player"
 local Assets = require("assets")  -- Centralized assets module
 local Block = require("block")
+local Audio = require("audio")
 
 Game = {}
 
@@ -49,13 +50,12 @@ end
 local function loadAudio()
     -- Load game music if not already loaded.
     if not gameMusic then
-        gameMusic = love.audio.newSource("assets/sounds/music.ogg", "stream")
-        gameMusic:setLooping(true)
+        gameMusic = Audio.musicSources.arena
     end
 
     -- Load alarm sound if not already loaded.
     if not alarmSound then
-        alarmSound = love.audio.newSource("assets/sounds/alarm.ogg", "static")
+        alarmSound = Audio.sfxSources.alarm
         alarmSound:setLooping(true)
     end
 
