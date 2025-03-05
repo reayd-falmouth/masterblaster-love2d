@@ -158,6 +158,25 @@ local function postSolve(a, b, coll)
     -- Optional: Code to run after the collision is resolved.
 end
 
+local function beginContact(a, b, coll)
+    local objA = a:getObject()
+    local objB = b:getObject()
+
+    -- Check if a fireball is colliding with a player
+    if a:getCollisionClass() == "Fireball" and b:getCollisionClass() == "Player" then
+        if objB and objB.yingyang then
+            -- Ignore collision if player is in yingyang mode
+            return false
+        end
+    elseif a:getCollisionClass() == "Player" and b:getCollisionClass() == "Fireball" then
+        if objA and objA.yingyang then
+            -- Ignore collision if player is in yingyang mode
+            return false
+        end
+    end
+    -- Process other collisions normally
+end
+
 function Game.keypressed(key)
     if gameStarted and gameTime > 0 then
         if key == "escape" then
@@ -244,7 +263,8 @@ function Game.reset()
     Game.world:addCollisionClass('Block', { enters = {'Fireball'} })
     Game.world:addCollisionClass('Fireball', { enters = {'Block', 'Item'} })
     Game.world:addCollisionClass('Bomb', { enters = {'Fireball'} })
-    Game.world:addCollisionClass('Item', { enters = {'Player', 'Fireball'} })
+    Game.world:addCollisionClass('Item', { enters = {'Player', 'Fireball', 'PlayerInvincible'} })
+    Game.world:addCollisionClass('PlayerInvincible', { ignores = {'Fireball'}})
     -- Register the collision callbacks with the physics world.
 
     -- Reset other game state variables:

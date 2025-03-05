@@ -2,6 +2,8 @@
 local Assets = require("assets")  -- global asset reference
 local Audio = require("audio")
 local Bomb = require("bomb")
+local Shaders = require("shaders")
+
 local Player = {}
 Player.__index = Player
 
@@ -14,31 +16,126 @@ local COLLIDER_RADIUS = 7
 
 local deathSound = Audio.sfxSources.die
 
+-- Helper function to clear the current buff's effects
+function Player:clearBuff(buffType)
+    if buffType == "yingyang" then
+        self.yingyang = false
+        -- Change collision class so fireball collisions are ignored.
+        self.collider:setCollisionClass("Player")
+    elseif buffType == "phase" then
+        self.phase = false
+    elseif buffType == "ghost" then
+        self.ghost = false
+    end
+    -- Add additional cases if you introduce more buff types
+end
+
 function Player:applyItemEffect(item)
-    if item.type == "bomb" then
-        self.bombs = self.bombs + 1
-    elseif item.type == "power" then
-        self.power = self.power + 1
-    elseif item.type == "superman" then
-        self.superman = true
-    elseif item.type == "yingyang" then
-        self.yingyang = true
-    elseif item.type == "phase" then
-        self.phase = true
-    elseif item.type == "ghost" then
-        self.ghost = true
-    elseif item.type == "speed" then
-        self.speed = self.speed + 20  -- Or adjust accordingly.
-    elseif item.type == "fastIgnition" then
-        self.fastIgnition = true
-    elseif item.type == "stopped" then
-        self.stopped = true
-    elseif item.type == "money" then
-        self.money = self.money + 1  -- Change value as needed.
-    elseif item.type == "remote" then
-        self.remote = true
-    elseif item.type == "death" then
-        self:die()  -- Call your death method.
+
+    if item.duration then
+         print("[DEBUG] Applying item: " .. item.type)
+        -- If there's an active buff, clear its effect before applying the new one.
+        if self.currentBuff then
+            self:clearBuff(self.currentBuff)
+        end
+
+        -- Set the new buff and its timer.
+        self.currentBuff = item.type
+        self.buffTimer = item.duration  -- Duration should come from ITEM_DEFINITIONS
+
+        -- Apply the effect immediately.
+        if item.type == "yingyang" then
+            self.yingyang = true
+            -- Change collision class so fireball collisions are ignored.
+            self.collider:setCollisionClass("PlayerInvincible")
+        elseif item.type == "phase" then
+            self.phase = true
+        elseif item.type == "ghost" then
+            self.ghost = true
+        end
+    else
+        if item.type == "bomb" then
+            self.bombs = self.bombs + 1
+        elseif item.type == "power" then
+            self.power = self.power + 1
+        elseif item.type == "superman" then
+            self.superman = true
+        elseif item.type == "speed" then
+            self.speed = self.speed + 20  -- Or adjust accordingly.
+        elseif item.type == "fastIgnition" then
+            self.fastIgnition = true
+        elseif item.type == "stopped" then
+            self.stopped = true
+        elseif item.type == "money" then
+            self.money = self.money + 1  -- Change value as needed.
+        elseif item.type == "remote" then
+            self.remote = true
+        elseif item.type == "death" then
+            self:die()  -- Call your death method.
+        end
+    end
+end
+
+function Player:keypressed(key)
+    if key == "space" then
+        self:dropBomb()
+    end
+end
+
+function Player:dropBomb()
+    if not Game.bombs then Game.bombs = {} end
+
+    -- Count how many bombs belong to this player
+    local bombCount = 0
+    for _, bomb in ipairs(Game.bombs) do
+        if bomb.owner == self then
+            bombCount = bombCount + 1
+        end
+    end
+
+    -- Check if the player can drop more bombs
+    if bombCount < self.bombs then
+        if self.remote then
+            print("Remote bomb activated: use cursor keys to move the bomb.")
+            -- Implement remote bomb logic if needed
+        else
+            local bomb = Bomb:new(self)
+            table.insert(Game.bombs, bomb)
+            --LOGGER:debug("Bomb dropped at (" .. bomb.x .. ", " .. bomb.y .. ")")
+        end
+    else
+        print("You have reached your bomb limit!")
+    end
+end
+
+function Player:setAnimation(animName)
+    if self.animations[animName] then
+        self.currentAnimation = self.animations[animName]
+        self.currentFrame = 1
+        self.animationTimer = 0
+    else
+        print("Animation " .. animName .. " not found.")
+    end
+end
+
+-- Called once when the player dies
+function Player:die()
+    -- Prevent re-running if already dead
+    if self.isDead then return end
+
+    self.isDead = true
+    self.stopped = true
+    deathSound:play()
+
+    -- Switch to the "die" animation frames
+    self.currentAnimation = self.animations.die
+    self.currentFrame = 1
+    self.animationTimer = 0
+
+    -- Destroy the collider so the dead player won't collide anymore
+    if self.collider then
+        self.collider:destroy()
+        self.collider = nil
     end
 end
 
@@ -108,11 +205,21 @@ function Player:new(playerIndex)
 end
 
 function Player:update(dt)
+    -- If a buff is active, update its timer.
+    if self.buffTimer then
+        self.buffTimer = self.buffTimer - dt
+        if self.buffTimer <= 0 then
+            self:clearBuff(self.currentBuff)
+            self.currentBuff = nil
+            self.buffTimer = nil
+        end
+    end
+
     -- If we've already flagged for removal, skip updates entirely
     if self.toRemove then return end
 
     -- Check collision with a Fireball if collider still exists
-    if self.collider and self.collider:enter("Fireball") then
+    if self.collider and self.collider:enter("Fireball") and not self.yingyang then
         self:die()  -- Switch to death logic
     end
 
@@ -193,70 +300,15 @@ function Player:draw(offsetX, offsetY)
 
     -- Draw the current frame
     local quad = self.currentAnimation[self.currentFrame]
+
+    if self.yingyang then
+        love.graphics.setShader(Shaders.whiteShader)
+    end
+
     love.graphics.draw(self.spriteSheet, quad, drawX, drawY)
-end
 
-function Player:keypressed(key)
-    if key == "space" then
-        self:dropBomb()
-    end
-end
-
-function Player:dropBomb()
-    if not Game.bombs then Game.bombs = {} end
-
-    -- Count how many bombs belong to this player
-    local bombCount = 0
-    for _, bomb in ipairs(Game.bombs) do
-        if bomb.owner == self then
-            bombCount = bombCount + 1
-        end
-    end
-
-    -- Check if the player can drop more bombs
-    if bombCount < self.bombs then
-        if self.remote then
-            print("Remote bomb activated: use cursor keys to move the bomb.")
-            -- Implement remote bomb logic if needed
-        else
-            local bomb = Bomb:new(self)
-            table.insert(Game.bombs, bomb)
-            --LOGGER:debug("Bomb dropped at (" .. bomb.x .. ", " .. bomb.y .. ")")
-        end
-    else
-        print("You have reached your bomb limit!")
-    end
-end
-
-
-function Player:setAnimation(animName)
-    if self.animations[animName] then
-        self.currentAnimation = self.animations[animName]
-        self.currentFrame = 1
-        self.animationTimer = 0
-    else
-        print("Animation " .. animName .. " not found.")
-    end
-end
-
--- Called once when the player dies
-function Player:die()
-    -- Prevent re-running if already dead
-    if self.isDead then return end
-
-    self.isDead = true
-    self.stopped = true
-    deathSound:play()
-
-    -- Switch to the "die" animation frames
-    self.currentAnimation = self.animations.die
-    self.currentFrame = 1
-    self.animationTimer = 0
-
-    -- Destroy the collider so the dead player won't collide anymore
-    if self.collider then
-        self.collider:destroy()
-        self.collider = nil
+    if self.yingyang then
+        love.graphics.setShader()  -- Reset shader to default
     end
 end
 
