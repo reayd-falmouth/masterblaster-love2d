@@ -16,10 +16,10 @@ local ITEM_DEFINITIONS = {
   { name = "bomb",        row = 2, col = 20, weight = 10 },
   { name = "power",       row = 3, col = 1,  weight = 10 },
   { name = "superman",    row = 3, col = 2,  weight = 3 },
-  { name = "yingyang",    row = 3, col = 4,  weight = 5 },
-  { name = "phase",       row = 3, col = 5,  weight = 5 },
-  { name = "ghost",       row = 3, col = 6,  weight = 4 },
-  { name = "speed",       row = 3, col = 7,  weight = 50 },
+  { name = "yingyang",    row = 3, col = 4,  weight = 50, duration = 15 }, -- 5 seconds duration
+  { name = "phase",       row = 3, col = 5,  weight = 5,  duration = 15 },
+  { name = "ghost",       row = 3, col = 6,  weight = 4,  duration = 15 },
+  { name = "speed",       row = 3, col = 7,  weight = 10 },
   { name = "death",       row = 3, col = 8,  weight = 5 },
   { name = "special",     row = 3, col = 9, weight = 2 },
   { name = "fastIgnition",row = 3, col = 10,  weight = 3 },
@@ -56,9 +56,9 @@ local function playItemSound(name)
         cashSound:play()
     elseif name == "speed" then
         goSound:play()
-    elseif name == "bomb" or "power" or "superman" or "special" then
+    elseif name == "bomb" or name == "power" or name == "superman" or name == "special" then
         bubbleSound:play()
-    elseif name == "yingyang" or "phase" or "ghost" then
+    elseif name == "yingyang" or name == "phase" or name == "ghost" then
         warpSound:play()
     end
 end
@@ -80,7 +80,7 @@ local function chooseItem()
 end
 
 -- Constructor for a new Item instance.
-function Item:new(x, y, name)
+function Item:new(x, y, itemDef)
     if not Game.items then Game.items = {} end
     local self = setmetatable({}, Item)
 
@@ -91,9 +91,11 @@ function Item:new(x, y, name)
 
     self.x = x
     self.y = y
-    self.type = name
+    self.type = itemDef.name
+    self.name = itemDef.name
     self.sprite = spriteSheet
-    self.quad = quads[name]
+    self.quad = quads[itemDef.name]
+    self.duration = itemDef.duration
     self.isSensor = true
     self.width = TILE_SIZE
     self.height = TILE_SIZE
@@ -117,7 +119,7 @@ function Item:spawn(x, y)
         return nil
     end
 
-    return Item:new(x, y, itemDef.name)
+    return Item:new(x, y, itemDef)
 end
 
 -- Called when a Fireball or bomb destroys this block
@@ -130,23 +132,28 @@ function Item:destroy()
     self.toRemove = true
 end
 
-
 function Item:update(dt)
     if self.toRemove then return end
 
     -- Check collision with a Fireball if collider still exists
     if self.collider and self.collider:enter("Fireball") then
-        self:destroy()  -- Switch to death logic
+        self:destroy()
     end
 
-    if self.collider and self.collider:enter("Player") then
+    -- Check collision with Player or PlayerInvincible
+    local collision_type = nil
+    if self.collider:enter("Player") then
+        collision_type = "Player"
+    elseif self.collider:enter("PlayerInvincible") then
+        collision_type = "PlayerInvincible"
+    end
+
+    if collision_type then
         playItemSound(self.type)
-        local collision_data = self.collider:getEnterCollisionData('Player')
-        ---- gets the reference to the player object, the player object must have
-        ---- used :setObject(self) to attach itself to the collider otherwise this wouldn't work
+        local collision_data = self.collider:getEnterCollisionData(collision_type)
         local player = collision_data.collider:getObject()
         player:applyItemEffect(self)
-        self:destroy()  -- Switch to death logic
+        self:destroy()
     end
 end
 
