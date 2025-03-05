@@ -78,6 +78,86 @@ local function spawnPlayers()
     end
 end
 
+local function dumpObjectInfo(obj)
+    print("=== Dumping object info ===")
+    print("Type:", type(obj))
+    if type(obj) == "table" then
+        print("Table keys:")
+        for k, v in pairs(obj) do
+            print("  " .. tostring(k) .. ":", type(v))
+        end
+    else
+        local mt = debug.getmetatable(obj)
+        if mt then
+            print("Metatable keys:")
+            for k, v in pairs(mt) do
+                print("  " .. tostring(k) .. ":", type(v))
+            end
+        else
+            print("No metatable available.")
+        end
+    end
+    print("=== End dump ===")
+end
+
+--local function safeGetObject(collider)
+--    if not collider then
+--        print("safeGetObject: collider is nil")
+--        return nil
+--    end
+--
+--    if collider.getObject then
+--        local obj = collider:getObject()
+--        if obj then
+--            return obj
+--        end
+--    end
+--
+--    if collider.getUserData then
+--        local ud = collider:getUserData()
+--        if not ud then
+--            print("safeGetObject: collider returned nil via getUserData")
+--        end
+--        return ud
+--    end
+--
+--    print("safeGetObject: collider has neither getObject nor getUserData")
+--    return nil
+--end
+--
+--
+--
+--
+--local function beginContact(a, b, coll)
+--    local objA = safeGetObject(a)
+--    local objB = safeGetObject(b)
+--
+--    if not objA or not objB then
+--        return
+--    end
+--
+--    if a:getCollisionClass() == "Player" and b:getCollisionClass() == "Item" then
+--        objA:applyItemEffect(objB)
+--        objB:removeItem()
+--    elseif a:getCollisionClass() == "Item" and b:getCollisionClass() == "Player" then
+--        objB:applyItemEffect(objA)
+--        objA:removeItem()
+--    end
+--end
+
+
+local function endContact(a, b, coll)
+    -- Optional: Code to run when two colliders separate.
+end
+
+local function preSolve(a, b, coll)
+    -- Optional: Code to run before the physics solver processes the collision.
+end
+
+local function postSolve(a, b, coll)
+    -- Optional: Code to run after the collision is resolved.
+end
+
 function Game.keypressed(key)
     if gameStarted and gameTime > 0 then
         if key == "escape" then
@@ -122,6 +202,7 @@ function Game.spawnBlocks()
         for col = 1, #Game.map.tileMap[row] do
             local tile = Game.map.tileMap[row][col]
             if tile ~= Game.map.tileIDs.EMPTY then
+                -- For both WALL and DESTRUCTIBLE tiles, create a block.
                 local isDestructible = (tile == Game.map.tileIDs.DESTRUCTIBLE)
                 local block = Block:new(row, col, tileSize, tile, isDestructible)
                 Game.blockMap[row][col] = block
@@ -150,6 +231,8 @@ function Game.reset()
         end
         Game.colliders = {}
     end
+    Game.items = {}
+    Game.Bombs = {}
 
     -- (Optional) Destroy player colliders if needed, or simply reinitialize the world.
     -- Reinitialize the physics world:
@@ -159,8 +242,10 @@ function Game.reset()
     -- Register your collision classes
     Game.world:addCollisionClass('Player', { enters = {'Fireball'} })
     Game.world:addCollisionClass('Block', { enters = {'Fireball'} })
-    Game.world:addCollisionClass('Fireball', { enters = {'Block'} })
+    Game.world:addCollisionClass('Fireball', { enters = {'Block', 'Item'} })
     Game.world:addCollisionClass('Bomb', { enters = {'Fireball'} })
+    Game.world:addCollisionClass('Item', { enters = {'Player', 'Fireball'} })
+    -- Register the collision callbacks with the physics world.
 
     -- Reset other game state variables:
     countdown = 3
@@ -272,6 +357,16 @@ function Game.update(dt)
             end
         end
 
+        if Game.items then
+            for i = #Game.items, 1, -1 do
+                local item = Game.items[i]
+                item:update(dt)
+                if item.toRemove then
+                    table.remove(Game.items, i)
+                end
+            end
+        end
+
     else
         -- Time up => game over
         Game.exitToStandings()
@@ -350,6 +445,13 @@ function Game.draw()
             if Game.fireBalls then
                 for _, fireball in ipairs(Game.fireBalls) do
                     fireball:draw()
+                end
+            end
+
+            -- In your main drawing routine (for instance, in game.lua or main.lua)
+            if Game.items then
+                for _, item in ipairs(Game.items) do
+                    item:draw()
                 end
             end
 

@@ -13,6 +13,34 @@ local COLLIDER_RADIUS = 7
 
 local deathSound = Audio.sfxSources.die
 
+function Player:applyItemEffect(item)
+    if item.type == "bomb" then
+        self.bombs = self.bombs + 1
+    elseif item.type == "power" then
+        self.power = self.power + 1
+    elseif item.type == "superman" then
+        self.superman = true
+    elseif item.type == "yingyang" then
+        self.yingyang = true
+    elseif item.type == "phase" then
+        self.phase = true
+    elseif item.type == "ghost" then
+        self.ghost = true
+    elseif item.type == "speed" then
+        self.speed = self.speed + 10  -- Or adjust accordingly.
+    elseif item.type == "fastIgnition" then
+        self.fastIgnition = true
+    elseif item.type == "stopped" then
+        self.stopped = true
+    elseif item.type == "money" then
+        self.money = self.money + 1  -- Change value as needed.
+    elseif item.type == "remote" then
+        self.remote = true
+    elseif item.type == "death" then
+        self:die()  -- Call your death method.
+    end
+end
+
 function Player:new(playerIndex)
     local self = setmetatable({}, Player)
     self.index = playerIndex or 1
@@ -45,17 +73,20 @@ function Player:new(playerIndex)
 
     self.x = 100
     self.y = 100
-    self.speed = 50
+
 
     -- Power-ups & flags
-    self.power = 0
-    self.superman = false
-    self.yingyang = false
-    self.ghost = false
-    self.numberOfBombs = 1
-    self.timedBombs = false
-    self.stopped = false
-    self.remote = false
+    self.bombs = 1 -- the amount of bombs a player can drop
+    self.power = 0 -- the additional blast distance of fireballs
+    self.superman = false -- can push single blocks and bombs
+    self.yingyang = false  -- protected against fireballs, sprite becomes solid white for limited time
+    self.phase = false  -- walk through walls, spirte becomes translucent, time limit
+    self.ghost = false  -- invisible and can walk through walls, special sprite animation
+    self.speed = 50 -- the speed the player moves at
+    self.fastIgnition = false -- changes so that the user only drops a single bomb, which is ignited upon releasing the spacebar
+    self.stopped = false -- temporarily causes the players movement to halt
+    self.money = 0 -- how much money (coins)  they have. this carries over matches.
+    self.remote = false -- allows the user to move bombs with the cursors, so when space is pressed movement is transffered to the bomb, player is stopped
 
     -- Physics collider
     self.collider = Game.world:newCircleCollider(
@@ -67,6 +98,7 @@ function Player:new(playerIndex)
     self.collider:setObject(self)
     self.collider:setFriction(0)
     self.collider:setCollisionClass('Player')
+    --self.collider:setUserData(self)
 
     -- Death / removal flags
     self.isDead = false
@@ -179,7 +211,7 @@ function Player:dropBomb()
         local bomb = Bomb:new(self)
         if not Game.bombs then Game.bombs = {} end
         table.insert(Game.bombs, bomb)
-        print("Bomb dropped at (" .. bomb.x .. ", " .. bomb.y .. ")")
+        --LOGGER:debug("Bomb dropped at (" .. bomb.x .. ", " .. bomb.y .. ")")
     end
 end
 

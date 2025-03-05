@@ -8,10 +8,6 @@ assets.objectSpriteSheet:setFilter("nearest", "nearest")
 assets.playerSpriteSheet = love.graphics.newImage("assets/sprites/player.png")
 assets.playerSpriteSheet:setFilter("nearest", "nearest")
 
--- Load the icons sprite sheet
-assets.iconsSpriteSheet = love.graphics.newImage("assets/sprites/icons.png")
-assets.iconsSpriteSheet:setFilter("nearest", "nearest")
-
 -- Define weights for each item
 assets.itemWeights = {
     bombs = 10,
@@ -43,6 +39,7 @@ function assets.getRandomItem()
         end
     end
 end
+
 function assets.loadTileQuads(tileSize, tilesPerRow, tilesPerCol)
     local tileQuads = {}
     local imgWidth, imgHeight = assets.objectSpriteSheet:getDimensions()
