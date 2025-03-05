@@ -1,6 +1,7 @@
 -- player.lua
 local Assets = require("assets")  -- global asset reference
 local Audio = require("audio")
+local Bomb = require("bomb")
 local Player = {}
 Player.__index = Player
 
@@ -203,17 +204,31 @@ function Player:keypressed(key)
 end
 
 function Player:dropBomb()
-    if self.remote then
-        print("Remote bomb activated: use cursor keys to move the bomb.")
-        -- Implement remote bomb logic if needed
+    if not Game.bombs then Game.bombs = {} end
+
+    -- Count how many bombs belong to this player
+    local bombCount = 0
+    for _, bomb in ipairs(Game.bombs) do
+        if bomb.owner == self then
+            bombCount = bombCount + 1
+        end
+    end
+
+    -- Check if the player can drop more bombs
+    if bombCount < self.bombs then
+        if self.remote then
+            print("Remote bomb activated: use cursor keys to move the bomb.")
+            -- Implement remote bomb logic if needed
+        else
+            local bomb = Bomb:new(self)
+            table.insert(Game.bombs, bomb)
+            --LOGGER:debug("Bomb dropped at (" .. bomb.x .. ", " .. bomb.y .. ")")
+        end
     else
-        local Bomb = require("bomb")
-        local bomb = Bomb:new(self)
-        if not Game.bombs then Game.bombs = {} end
-        table.insert(Game.bombs, bomb)
-        --LOGGER:debug("Bomb dropped at (" .. bomb.x .. ", " .. bomb.y .. ")")
+        print("You have reached your bomb limit!")
     end
 end
+
 
 function Player:setAnimation(animName)
     if self.animations[animName] then
