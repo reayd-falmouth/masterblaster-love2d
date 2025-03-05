@@ -43,3 +43,4 @@ luac.out
 *.love
 build
 .amiga/
+.aider*

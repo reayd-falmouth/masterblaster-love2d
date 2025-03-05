@@ -73,14 +73,25 @@ function Bomb:new(player)
             gridY,
             (COLLIDER_RADIUS / 2)
         ),
-        activationDelay = 1   -- Time in seconds before bomb collision becomes active.
+        activationDelay = 1,   -- Time in seconds before bomb collision becomes active.
+        toRemove = false
     }
     bomb.collider:setSensor(true)  -- Disable collision initially.
+    bomb.collider:setCollisionClass("Bomb")
     setmetatable(bomb, Bomb)
     return bomb
 end
 
 function Bomb:update(dt)
+    -- If we've already flagged for removal, skip updates entirely
+    if self.toRemove then return end
+
+    -- Check collision with a Fireball if collider still exists
+    if self.collider and self.collider:enter("Fireball") then
+        self:explode()  -- Switch to death logic
+        self.toRemove = true -- remove the bomb before animation completed
+    end
+
     self.timer = self.timer - dt
     self.animationTimer = self.animationTimer + dt
     if self.animationTimer >= self.frameDuration then
@@ -178,7 +189,6 @@ function Bomb:explode()
         end
     end
 end
-
 
 function Bomb:draw()
     love.graphics.draw(

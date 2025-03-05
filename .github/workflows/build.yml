@@ -46,8 +46,8 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y zip unzip wget
 
       - name: Run Windows Build Script
-        run: bash scripts/build_windows.sh 11.5 win64
-
+        run: bash .github/scripts/build_windows.sh 11.5 win64
+        
       - name: Upload Windows Executable
         uses: actions/upload-artifact@v4
         with:
