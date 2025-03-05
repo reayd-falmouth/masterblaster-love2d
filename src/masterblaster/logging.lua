@@ -15,7 +15,8 @@ logging.LOG_LEVEL = logging.DEBUG
 -- Internal function to log messages
 local function log(level, level_name, message)
     if level >= logging.LOG_LEVEL then
-        print(string.format("[%s] %s", level_name, message))
+        local timestamp = os.date("%Y-%m-%d %H:%M:%S")
+        print(string.format("[%s] [%s] %s", timestamp, level_name, message))
     end
 end
 
