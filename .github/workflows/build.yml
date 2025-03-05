@@ -47,7 +47,7 @@ jobs:
 
       - name: Run Windows Build Script
         run: bash .github/scripts/build_windows.sh 11.5 win64
-
+        
       - name: Upload Windows Executable
         uses: actions/upload-artifact@v4
         with:
