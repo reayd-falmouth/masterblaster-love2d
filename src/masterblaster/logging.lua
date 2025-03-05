@@ -9,8 +9,9 @@ logging.WARNING = 30
 logging.ERROR = 40
 logging.CRITICAL = 50
 
--- Global log level
-logging.LOG_LEVEL = logging.DEBUG
+-- Global debug flag
+local DEBUG = false
+logging.LOG_LEVEL = DEBUG and logging.DEBUG or logging.LOG_LEVEL
 
 -- Internal function to log messages
 local function log(level, level_name, message)
