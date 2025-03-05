@@ -10,7 +10,6 @@ logging.ERROR = 40
 logging.CRITICAL = 50
 
 -- Global debug flag
-local DEBUG = false
 logging.LOG_LEVEL = DEBUG and logging.DEBUG or logging.LOG_LEVEL
 
 -- Internal function to log messages

@@ -160,6 +160,7 @@ function Game.reset()
     Game.world:addCollisionClass('Player', { enters = {'Fireball'} })
     Game.world:addCollisionClass('Block', { enters = {'Fireball'} })
     Game.world:addCollisionClass('Fireball', { enters = {'Block'} })
+    Game.world:addCollisionClass('Bomb', { enters = {'Fireball'} })
 
     -- Reset other game state variables:
     countdown = 3
@@ -237,7 +238,9 @@ function Game.update(dt)
             for i = #Game.bombs, 1, -1 do
                 local bomb = Game.bombs[i]
                 bomb:update(dt)
-                if bomb.state == "exploding" and bomb.timer <= 0 then
+                if bomb.toRemove then
+                    table.remove(Game.bombs, i)
+                elseif bomb.state == "exploding" and bomb.timer <= 0 then
                     table.remove(Game.bombs, i)
                 end
             end
