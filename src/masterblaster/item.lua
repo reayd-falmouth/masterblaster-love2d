@@ -6,6 +6,7 @@ Item.__index = Item
 
 -- Adjust these constants as needed for your sprite dimensions.
 local TILE_SIZE = 16
+local COLLIDER_RADIUS = 2.5
 
 -- Define the items.
 -- The sprites are located in assets/sprites/icons.png.
@@ -18,7 +19,7 @@ local ITEM_DEFINITIONS = {
   { name = "yingyang",    row = 3, col = 4,  weight = 5 },
   { name = "phase",       row = 3, col = 5,  weight = 5 },
   { name = "ghost",       row = 3, col = 6,  weight = 4 },
-  { name = "speed",       row = 3, col = 7,  weight = 10 },
+  { name = "speed",       row = 3, col = 7,  weight = 50 },
   { name = "death",       row = 3, col = 8,  weight = 5 },
   { name = "special",     row = 3, col = 9, weight = 2 },
   { name = "fastIgnition",row = 3, col = 10,  weight = 3 },
@@ -50,6 +51,7 @@ end
 
 -- Helper function: plays an items based sound on the name.
 local function playItemSound(name)
+    print("playing sound: " .. name)
     if name == "money" then
         cashSound:play()
     elseif name == "speed" then
@@ -82,6 +84,11 @@ function Item:new(x, y, name)
     if not Game.items then Game.items = {} end
     local self = setmetatable({}, Item)
 
+    -- Calculate offset to center the smaller collider
+    -- Calculate center of the 16x16 tile
+    self.center_x = x + TILE_SIZE / 2
+    self.center_y = y + TILE_SIZE / 2
+
     self.x = x
     self.y = y
     self.type = name
@@ -92,7 +99,7 @@ function Item:new(x, y, name)
     self.height = TILE_SIZE
     self.toRemove = false
     -- Create a Box2D collider for this item.
-    self.collider = Game.world:newRectangleCollider(self.x, self.y, TILE_SIZE, TILE_SIZE)
+    self.collider = Game.world:newCircleCollider(self.center_x, self.center_y, COLLIDER_RADIUS)
     self.collider:setCollisionClass("Item")
     self.collider:setType("static")
     self.collider:setSensor(false)
@@ -133,7 +140,7 @@ function Item:update(dt)
     end
 
     if self.collider and self.collider:enter("Player") then
-        playItemSound(self.name)
+        playItemSound(self.type)
         local collision_data = self.collider:getEnterCollisionData('Player')
         ---- gets the reference to the player object, the player object must have
         ---- used :setObject(self) to attach itself to the collider otherwise this wouldn't work

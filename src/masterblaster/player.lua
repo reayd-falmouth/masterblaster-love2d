@@ -28,7 +28,7 @@ function Player:applyItemEffect(item)
     elseif item.type == "ghost" then
         self.ghost = true
     elseif item.type == "speed" then
-        self.speed = self.speed + 10  -- Or adjust accordingly.
+        self.speed = self.speed + 20  -- Or adjust accordingly.
     elseif item.type == "fastIgnition" then
         self.fastIgnition = true
     elseif item.type == "stopped" then
@@ -75,7 +75,6 @@ function Player:new(playerIndex)
     self.x = 100
     self.y = 100
 
-
     -- Power-ups & flags
     self.bombs = 1 -- the amount of bombs a player can drop
     self.power = 0 -- the additional blast distance of fireballs
@@ -83,7 +82,7 @@ function Player:new(playerIndex)
     self.yingyang = false  -- protected against fireballs, sprite becomes solid white for limited time
     self.phase = false  -- walk through walls, spirte becomes translucent, time limit
     self.ghost = false  -- invisible and can walk through walls, special sprite animation
-    self.speed = 50 -- the speed the player moves at
+    self.speed = 25 -- the speed the player moves at
     self.fastIgnition = false -- changes so that the user only drops a single bomb, which is ignited upon releasing the spacebar
     self.stopped = false -- temporarily causes the players movement to halt
     self.money = 0 -- how much money (coins)  they have. this carries over matches.
