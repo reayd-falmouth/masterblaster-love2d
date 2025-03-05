@@ -43,6 +43,7 @@ function assets.getRandomItem()
         end
     end
 end
+function assets.loadTileQuads(tileSize, tilesPerRow, tilesPerCol)
     local tileQuads = {}
     local imgWidth, imgHeight = assets.objectSpriteSheet:getDimensions()
     for row = 0, tilesPerCol - 1 do
