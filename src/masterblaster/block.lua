@@ -27,7 +27,8 @@ function Block:new(row, col, tileSize, tileID, isDestructible)
     self.tileID = tileID
     self.isDestructible = isDestructible
 
-    -- Animation setup
+    -- Item setup
+    self.item = Assets.getRandomItem()
     self.destructionAnimation = destructionAnimation
     self.frameDuration = FRAME_DURATION
     self.currentFrame = 1

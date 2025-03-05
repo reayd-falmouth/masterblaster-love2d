@@ -8,7 +8,41 @@ assets.objectSpriteSheet:setFilter("nearest", "nearest")
 assets.playerSpriteSheet = love.graphics.newImage("assets/sprites/player.png")
 assets.playerSpriteSheet:setFilter("nearest", "nearest")
 
-function assets.loadTileQuads(tileSize, tilesPerRow, tilesPerCol)
+-- Load the icons sprite sheet
+assets.iconsSpriteSheet = love.graphics.newImage("assets/sprites/icons.png")
+assets.iconsSpriteSheet:setFilter("nearest", "nearest")
+
+-- Define weights for each item
+assets.itemWeights = {
+    bombs = 10,
+    power = 5,
+    superman = 2,
+    yingyang = 2,
+    phase = 1,
+    ghost = 1,
+    speed = 8,
+    fastIgnition = 3,
+    stopped = 1,
+    remote = 1
+}
+
+-- Function to select a random item based on weights
+function assets.getRandomItem()
+    local totalWeight = 0
+    for _, weight in pairs(assets.itemWeights) do
+        totalWeight = totalWeight + weight
+    end
+
+    local randomWeight = math.random() * totalWeight
+    local cumulativeWeight = 0
+
+    for item, weight in pairs(assets.itemWeights) do
+        cumulativeWeight = cumulativeWeight + weight
+        if randomWeight <= cumulativeWeight then
+            return item
+        end
+    end
+end
     local tileQuads = {}
     local imgWidth, imgHeight = assets.objectSpriteSheet:getDimensions()
     for row = 0, tilesPerCol - 1 do
