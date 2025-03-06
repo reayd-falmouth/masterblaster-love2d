@@ -1,8 +1,11 @@
 require("globals")
-LOGGER = require("logging")
+log = require("lib.logging")
 local Audio = require("audio")
 local Title = require("title")
 local currentState = Title
+
+GameSettings = require("settings")
+PlayerStats = require("stats")
 
 -- These variables will be computed on window resize
 local scale, offsetX, offsetY = 1, 0, 0

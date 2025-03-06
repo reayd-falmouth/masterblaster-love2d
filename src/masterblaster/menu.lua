@@ -5,9 +5,6 @@ local UITheme = require("theme")  -- Import shared colors
 local Game = require("game")
 local Shop = require("shop")
 
-GameSettings = require("settings")
-PlayerStats = require("stats")
-
 -- A list of menu items that can be navigated and toggled
 local menuItems = {
     { label = "WINS NEEDED", value = GameSettings.winsNeeded, choices = {1, 2, 3, 4, 5, 6, 7, 8, 9}, key = "winsNeeded" },
@@ -122,8 +119,7 @@ function MainMenu.keypressed(key)
         end
     elseif key == "return" or key == "kpenter" then
         PlayerStats.init(GameSettings.players)
-        --switchState(Game) -- Switch to game state
-        switchState(Shop) -- Switch to game state
+        switchState(Game) -- Switch to game state
     end
 end
 
