@@ -70,7 +70,7 @@ Assets.ITEM_DEFINITIONS = {
     name = "DEATH",
     cost = 0,  -- Not available in shop
     row = 3, col = 8,
-    weight = 50,
+    weight = 5,
     shopItem = false
   },
   {
@@ -92,12 +92,12 @@ Assets.ITEM_DEFINITIONS = {
     shopItem = true
   },
   {
-    enabled = false,
+    enabled = true,
     key = "stopped",
     name = "STOPPED",
     cost = 0,  -- Not available in shop
     row = 3, col = 11,
-    weight = 2,
+    weight = 5,
     duration = 10,
     shopItem = false
   },
