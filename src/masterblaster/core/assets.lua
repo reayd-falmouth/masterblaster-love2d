@@ -37,12 +37,12 @@ Assets.ITEM_DEFINITIONS = {
     shopItem = true
   },
   {
-    enabled = false,
+    enabled = true,
     key = "protection",
     name = "PROTECTION",
     cost = 3,
     row = 3, col = 4,
-    weight = 5,
+    weight = 70,
     shopItem = true
   },
   {

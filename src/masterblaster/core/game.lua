@@ -117,12 +117,12 @@ local function beginContact(a, b, coll)
 
     -- Check if a fireball is colliding with a player
     if a:getCollisionClass() == "Fireball" and b:getCollisionClass() == "Player" then
-        if objB and objB.yingyang then
+        if objB and objB.protection then
             -- Ignore collision if player is in yingyang mode
             return false
         end
     elseif a:getCollisionClass() == "Player" and b:getCollisionClass() == "Fireball" then
-        if objA and objA.yingyang then
+        if objA and objA.protection then
             -- Ignore collision if player is in yingyang mode
             return false
         end
@@ -228,8 +228,8 @@ function Game.reset()
     Game.world:addCollisionClass('Fireball', { enters = {'Block', 'Item'} })
     Game.world:addCollisionClass('Block', { enters = {'Fireball'} })
     Game.world:addCollisionClass('Bomb', { enters = {'Fireball'} })
-    Game.world:addCollisionClass('Item', { enters = {'Player', 'Fireball'} })
-    --Game.world:addCollisionClass('PlayerInvincible', { ignores = {'Fireball'}})
+    Game.world:addCollisionClass('Item', { enters = {'Player', 'Fireball', 'PlayerInvincible'} })
+    Game.world:addCollisionClass('PlayerInvincible', { ignores = {'Fireball'}})
     --Game.world:addCollisionClass('PlayerGhost', { ignores = {'Block'}})
 
     -- Register the collision callbacks with the physics world.
