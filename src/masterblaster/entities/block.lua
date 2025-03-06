@@ -15,9 +15,17 @@ local destructionAnimation = Assets.generateAnimation(
     spriteSheet
 )
 
+local createAnimation = Assets.generateAnimation(
+    1, 5,  -- start and end frame indices in the spritesheet
+    16, 20,  -- source X, Y offset within sheet
+    16, 16, -- width, height of each frame
+    0,      -- spacing between frames (if any)
+    spriteSheet
+)
+
 local FRAME_DURATION = 0.05
 
-function Block:new(row, col, tileSize, tileID, isDestructible)
+function Block:new(row, col, tileSize, tileID, isDestructible, isShrinking)
     local self = setmetatable({}, Block)
 
     -- Basic tile data
@@ -26,6 +34,7 @@ function Block:new(row, col, tileSize, tileID, isDestructible)
     self.tileSize = tileSize
     self.tileID = tileID
     self.isDestructible = isDestructible
+    self.isShrinking = isShrinking or false
 
     self.destructionAnimation = destructionAnimation
     self.frameDuration = FRAME_DURATION
@@ -44,7 +53,6 @@ function Block:new(row, col, tileSize, tileID, isDestructible)
     self.collider:setType("static")
     self.collider:setSensor(false)
     self.collider:setObject(self)
-    --self.collider:setUserData(self)
 
     return self
 end

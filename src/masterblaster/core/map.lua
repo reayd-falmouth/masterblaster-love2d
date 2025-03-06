@@ -1,6 +1,8 @@
 -- map.lua
 require("config.globals")
-
+local Audio = require("system.audio")
+local Block = require("entities.block")
+local shrinkSound = nil
 local map = {}
 
 -- Map configuration
@@ -135,46 +137,82 @@ function map:findNearestFreeBlock(gx, gy)
 end
 
 -- Shrink the map one layer clockwise.
-function map:shrinkMapStep()
-  if self.shrinkStep >= math.min(math.floor(self.rows / 2), math.floor(self.cols / 2)) then
-    return -- Reached the center
-  end
-
-  local startRow = self.shrinkStep + 1
-  local startCol = self.shrinkStep + 1
-  local endRow = self.rows - self.shrinkStep
-  local endCol = self.cols - self.shrinkStep
-
-  -- Top row (left to right)
-  for c = startCol, endCol do
-    if self.tileMap[startRow][c] ~= self.tileIDs.WALL then
-      self.tileMap[startRow][c] = self.tileIDs.WALL
-    end
-  end
-
-  -- Right column (top to bottom)
-  for r = startRow, endRow do
-    if self.tileMap[r][endCol] ~= self.tileIDs.WALL then
-      self.tileMap[r][endCol] = self.tileIDs.WALL
-    end
-  end
-
-  -- Bottom row (right to left)
-  for c = endCol, startCol, -1 do
-    if self.tileMap[endRow][c] ~= self.tileIDs.WALL then
-      self.tileMap[endRow][c] = self.tileIDs.WALL
-    end
-  end
-
-  -- Left column (bottom to top)
-  for r = endRow, startRow, -1 do
-    if self.tileMap[r][startCol] ~= self.tileIDs.WALL then
-      self.tileMap[r][startCol] = self.tileIDs.WALL
-    end
-  end
-
-  self.shrinkStep = self.shrinkStep + 1
+function map:initShrink()
+    -- Start shrinking from the second layer to preserve outer boundary
+    self.shrinkLayer = 2
+    self.shrinkSide = 'top'
+    self.shrinkIndex = self.shrinkLayer
+    shrinkSound = Audio.sfxSources.bubble
 end
+
+function map:shrinkMapStep()
+    if not self.shrinkLayer then
+        self:initShrink()
+    end
+
+    local layer = self.shrinkLayer
+    local maxLayer = math.min(math.floor(self.rows / 2), math.floor(self.cols / 2))
+
+    if layer > maxLayer then
+        return
+    end
+
+    local r, c
+
+    if self.shrinkSide == 'top' then
+        r, c = layer, self.shrinkIndex
+        self.shrinkIndex = self.shrinkIndex + 1
+        if self.shrinkIndex > self.cols - layer + 1 then
+            self.shrinkSide = 'right'
+            self.shrinkIndex = layer + 1
+        end
+
+    elseif self.shrinkSide == 'right' then
+        r, c = self.shrinkIndex, self.cols - layer + 1
+        self.shrinkIndex = self.shrinkIndex + 1
+        if self.shrinkIndex > self.rows - layer + 1 then
+            self.shrinkSide = 'bottom'
+            self.shrinkIndex = self.cols - layer
+        end
+
+    elseif self.shrinkSide == 'bottom' then
+        r, c = self.rows - layer + 1, self.shrinkIndex
+        self.shrinkIndex = self.shrinkIndex - 1
+        if self.shrinkIndex < layer then
+            self.shrinkSide = 'left'
+            self.shrinkIndex = self.rows - layer
+        end
+
+    elseif self.shrinkSide == 'left' then
+        r, c = self.shrinkIndex, layer
+        self.shrinkIndex = self.shrinkIndex - 1
+        if self.shrinkIndex <= layer then
+            self.shrinkLayer = self.shrinkLayer + 1
+            self.shrinkSide = 'top'
+            self.shrinkIndex = self.shrinkLayer
+        end
+    end
+
+    -- Set tile to WALL in tileMap
+    self.tileMap[r][c] = self.tileIDs.WALL
+
+    -- Add a new Block object to blockMap for collision
+    Game.blockMap[r][c] = Block:new(r, c, self.tileSize, self.tileIDs.WALL, false, true)
+
+    -- Check for players at this position and kill if necessary
+    for _, player in ipairs(Game.players) do
+        local playerRow = math.floor(player.y / self.tileSize) + 1
+        local playerCol = math.floor(player.x / self.tileSize) + 1
+
+        if playerRow == r and playerCol == c and not player.toRemove then
+            player:die()
+        end
+    end
+
+    -- Play shrinking sound
+    shrinkSound:play()
+end
+
 
 -- Get the offsets for the map
 function map:getDrawOffset()

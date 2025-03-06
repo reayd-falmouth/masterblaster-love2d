@@ -24,8 +24,8 @@ local playerResults = {} -- Store player standings
 local tileQuads = {}  -- Initialize empty table
 local tilesPerRow = 20  -- Number of tiles per row
 local tilesPerCol = 3    -- Number of tiles per column
-local shrinkTimer = 0 -- Timer to control shrinking speed
-local shrinkDelay = 2 -- Time (in seconds) between each shrink step
+local shrinkTimer = 1 -- Timer to control shrinking speed
+local shrinkDelay = 1/6 -- Time (in seconds) between each shrink step
 local tileSize = 16  -- Tile size in pixels
 
 -- At the top, rename your constants table:
@@ -238,7 +238,7 @@ function Game.reset()
     countdown = 3
     countdownTimer = 1
     gameStarted = false
-    gameTime = 600
+    gameTime = GameSettings.shrinking == "ON" and 30 or 300
     alarmThreshold = gameTime / 3
     alarmTriggered = false
     playerResults = {}
@@ -279,22 +279,16 @@ function Game.update(dt)
         gameTime = gameTime - dt
 
         -- Alarm logic
-        if gameTime <= alarmThreshold and not alarmTriggered then
-            alarmTriggered = true
-            alarmSound:play()
+        if GameSettings.shrinking == "ON" then
+            if gameTime <= alarmThreshold and not alarmTriggered then
+                alarmTriggered = true
+                alarmSound:play()
+            end
         end
 
         -- Speed up music
         local newPitch = gameMusic:getPitch() + (dt * tension)
         gameMusic:setPitch(math.min(newPitch, 2.0))
-
-        if alarmTriggered and GameSettings.shrinking then
-            shrinkTimer = shrinkTimer + dt
-            if shrinkTimer >= shrinkDelay then
-                shrinkTimer = 0
-                Game.map:shrinkMapStep()
-            end
-        end
 
         -- 1) Update players
         --for i = #Game.players, 1, -1 do
@@ -341,6 +335,14 @@ function Game.update(dt)
                         Game.blockMap[row][col] = nil
                     end
                 end
+            end
+        end
+
+        if alarmTriggered and GameSettings.shrinking then
+            shrinkTimer = shrinkTimer + dt
+            if shrinkTimer >= shrinkDelay then
+                shrinkTimer = 0
+                Game.map:shrinkMapStep()
             end
         end
 
