@@ -31,7 +31,7 @@ local function playItemSound(key)
         bubbleSound:play()
     elseif key == "ghost" then
         warpSound:play()
-    elseif key == "yingyang" then
+    elseif key == "protection" then
         ooLaLaSound:play()
     end
 end

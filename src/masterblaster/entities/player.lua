@@ -16,18 +16,11 @@ local COLLIDER_RADIUS = 7
 
 local deathSound = Audio.sfxSources.die
 
--- Helper function to clear the current buff's effects
-function Player:clearBuff(buffType)
-    if buffType == "yingyang" then
-        self.yingyang = false
-        -- Change collision class so fireball collisions are ignored.
-        self.collider:setCollisionClass("Player")
-    elseif buffType == "phase" then
-        self.phase = false
-    elseif buffType == "ghost" then
-        self.ghost = false
-    end
-    -- Add additional cases if you introduce more buff types
+-- Call this to start the 3-second countdown when hit during protection.
+function Player:activateProtectionTimer()
+    self.protectionTimer = 3
+    self.flickerAccum = 0
+    self.flickerState = false  -- Initial state (could be true if you prefer)
 end
 
 function Player:applyItemEffect(item)
@@ -41,6 +34,8 @@ function Player:applyItemEffect(item)
         self.superman = true
     elseif item.key == "protection" then
         self.protection = true
+        --log.debug("collision class set to PlayerInvincible")
+        --self.collider:setCollisionClass('PlayerInvincible')
     elseif item.key == "ghost" then
         self.ghost = true
     elseif item.key == "speedUp" then
@@ -78,7 +73,6 @@ function Player:keyreleased(key)
     end
 end
 
-
 function Player:dropBomb()
     if not Game.bombs then Game.bombs = {} end
 
@@ -102,16 +96,6 @@ function Player:dropBomb()
         end
     else
         log.warning("You have reached your bomb limit!")
-    end
-end
-
-function Player:setAnimation(animName)
-    if self.animations[animName] then
-        self.currentAnimation = self.animations[animName]
-        self.currentFrame = 1
-        self.animationTimer = 0
-    else
-        print("Animation " .. animName .. " not found.")
     end
 end
 
@@ -174,7 +158,8 @@ function Player:new(playerIndex)
     self.bombs = 1 + (self.stats.purchased["bomb"] or 0) -- the amount of bombs a player can drop
     self.power = 0 + (self.stats.purchased["powerUp"] or 0) -- the additional blast distance of fireballs
     self.superman = false -- can push single blocks and bombs
-    self.yingyang = false  -- protected against fireballs, sprite becomes solid white for limited time
+    self.protection = false  -- protected against fireballs, sprite becomes solid white for limited time
+    self.protectionTimer = nil
     self.phase = false  -- walk through walls, spirte becomes translucent, time limit
     self.ghost = false  -- invisible and can walk through walls, special sprite animation
     self.speed = 35 -- the speed the player moves at
@@ -203,13 +188,31 @@ function Player:new(playerIndex)
 end
 
 function Player:update(dt)
-    -- If a buff is active, update its timer.
-    if self.buffTimer then
-        self.buffTimer = self.buffTimer - dt
-        if self.buffTimer <= 0 then
-            self:clearBuff(self.currentBuff)
-            self.currentBuff = nil
-            self.buffTimer = nil
+    -- Update the protection timer and flicker if it’s running
+    if self.protectionTimer then
+        self.protectionTimer = self.protectionTimer - dt
+
+        -- Increase the flicker accumulator by the elapsed time
+        self.flickerAccum = (self.flickerAccum or 0) + dt
+
+        -- Compute progress (0 at start, 1 when timer expires)
+        local totalDuration = 3  -- seconds
+        local progress = (totalDuration - self.protectionTimer) / totalDuration
+        -- Linearly interpolate flicker period from fast (0.1 sec) to slow (0.5 sec)
+        self.flickerPeriod = 0.1 + progress * (0.5 - 0.1)
+
+        -- Toggle the flicker state if enough time has passed
+        if self.flickerAccum >= self.flickerPeriod then
+            self.flickerState = not self.flickerState
+            self.flickerAccum = self.flickerAccum - self.flickerPeriod
+        end
+
+        -- Once the timer expires, remove protection
+        if self.protectionTimer <= 0 then
+            self.protection = false
+            self.protectionTimer = nil
+            self.flickerAccum = nil
+            self.flickerState = nil
         end
     end
 
@@ -226,10 +229,17 @@ function Player:update(dt)
     if self.toRemove then return end
 
     -- Check collision with a Fireball if collider still exists
-    if self.collider and self.collider:enter("Fireball") and not self.yingyang then
-        self:die()  -- Switch to death logic
+    if self.collider and self.collider:enter("Fireball") then
+        if self.protection then
+            -- Protection is already active.
+            -- If the timer hasn’t started yet, activate it.
+            if not self.protectionTimer then
+                self:activateProtectionTimer()
+            end
+        else
+            self:die()
+        end
     end
-
     -- If the player is dead, just run the death animation
     if self.isDead then
         self.animationTimer = self.animationTimer + dt
@@ -310,13 +320,19 @@ function Player:draw(offsetX, offsetY)
     -- Draw the current frame
     local quad = self.currentAnimation[self.currentFrame]
 
-    if self.yingyang then
-        love.graphics.setShader(Shaders.whiteShader)
+    if self.protection then
+        if self.protectionTimer then
+            if self.flickerState then
+                love.graphics.setShader(Shaders.whiteShader)
+            end
+        else
+            love.graphics.setShader(Shaders.whiteShader)
+        end
     end
 
     love.graphics.draw(self.spriteSheet, quad, drawX, drawY)
 
-    if self.yingyang then
+    if self.protection then
         love.graphics.setShader()  -- Reset shader to default
     end
 end
