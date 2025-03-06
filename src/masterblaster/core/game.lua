@@ -412,10 +412,12 @@ function Game.draw()
     elseif gameTime > 0 then
         local minutes = math.floor(gameTime / 60)
         local seconds = math.floor(gameTime % 60)
-        love.graphics.printf(
-            string.format("TIME LEFT: %02d:%02d", minutes, seconds),
-            0, 20, VIRTUAL_WIDTH, "center"
-        )
+        if DEBUG then
+            love.graphics.printf(
+                    string.format("TIME LEFT: %02d:%02d", minutes, seconds),
+                    0, 20, VIRTUAL_WIDTH, "center"
+            )
+        end
 
         if gameStarted then
             local screenWidth = VIRTUAL_WIDTH
