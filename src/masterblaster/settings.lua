@@ -2,12 +2,13 @@
 local GameSettings = {
     winsNeeded = 3,
     players = 2,
-    shop = "OFF",
+    shop = "ON",
     shrinking = "OFF",
     fastIgnition = "OFF",
-    startMoney = "OFF",
+    startMoney = "ON",
     normalLevel = "YES",
-    gambling = "NO"
+    gambling = "NO",
+    startMoneyAmount = 1
 }
 
 return GameSettings

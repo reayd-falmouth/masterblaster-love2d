@@ -1,23 +1,164 @@
-local assets = {}
+local Assets = {}
+Assets.__index = Assets
 
 -- Load the object sprite sheet (if needed)
-assets.objectSpriteSheet = love.graphics.newImage("assets/sprites/objects.png")
-assets.objectSpriteSheet:setFilter("nearest", "nearest")
+Assets.objectSpriteSheet = love.graphics.newImage("assets/sprites/objects.png")
+Assets.objectSpriteSheet:setFilter("nearest", "nearest")
 
-local TILE_SIZE = 16
+Assets.TILE_SIZE = 16
+
+-- Your original item definitions.
+Assets.ITEM_DEFINITIONS = {
+  {
+    key = "bomb",
+    name = "BOMB",
+    cost = 1,
+    row = 2, col = 20,
+    weight = 10,
+    shopItem = true
+  },
+  {
+    key = "powerUp",
+    name = "POWER-UP",
+    cost = 1,
+    row = 3, col = 1,
+    weight = 10,
+    shopItem = true
+  },
+  {
+    key = "superman",
+    name = "SUPERMAN",
+    cost = 2,
+    row = 3, col = 2,
+    weight = 3,
+    shopItem = true
+  },
+  {
+    key = "protection",
+    name = "PROTECTION",
+    cost = 3,
+    row = 3, col = 4,
+    weight = 5,
+    shopItem = true
+  },
+  {
+    key = "ghost",
+    name = "GHOST",
+    cost = 3,
+    row = 3, col = 5,
+    weight = 50,
+    duration = 10,
+    shopItem = true
+  },
+  {
+    key = "speedUp",
+    name = "SPEED-UP",
+    cost = 4,
+    row = 3, col = 7,
+    weight = 10,
+    shopItem = true
+  },
+  {
+    key = "death",
+    name = "DEATH",
+    cost = 0,  -- Not available in shop
+    row = 3, col = 8,
+    weight = 5,
+    shopItem = false
+  },
+  {
+    key = "special",
+    name = "SPECIAL",
+    cost = 0,  -- Not available in shop
+    row = 3, col = 9,
+    weight = 2,
+    shopItem = false
+  },
+  {
+    key = "timebomb",
+    name = "TIMEBOMB",
+    cost = 2,
+    row = 3, col = 10,
+    weight = 3,
+    shopItem = true
+  },
+  {
+    key = "stopped",
+    name = "STOPPED",
+    cost = 0,  -- Not available in shop
+    row = 3, col = 11,
+    weight = 2,
+    duration = 10,
+    shopItem = false
+  },
+  {
+    key = "coin",
+    name = "COIN",
+    cost = 1,
+    row = 3, col = 12,
+    weight = 9,
+    shopItem = false
+  },
+  {
+    key = "controller",
+    name = "CONTROLLER",
+    cost = 4,
+    row = 3, col = 13,
+    weight = 3,
+    shopItem = true
+  },
+  {
+    key = "none",
+    name = "NONE",
+    cost = 0,
+    weight = 50,
+    shopItem = false
+  }
+}
+
+
+-- Convert item definitions to a mapping table.
+Assets.itemMapping = {}
+for _, item in ipairs(Assets.ITEM_DEFINITIONS) do
+  if item.row and item.col then
+    -- Use the item name as the key and store row/col.
+    Assets.itemMapping[item.key] = { row = item.row, col = item.col }
+  end
+end
+-- Now you can access, for example:
+-- assets.itemMapping["bomb"] returns { row = 2, col = 20 }
+-- assets.itemMapping["power-up"] returns { row = 3, col = 1 }
 
 -- Load the player sprite sheet once
-assets.playerSpriteSheet = love.graphics.newImage("assets/sprites/player.png")
-assets.playerSpriteSheet:setFilter("nearest", "nearest")
+Assets.playerSpriteSheet = love.graphics.newImage("assets/sprites/player.png")
+Assets.playerSpriteSheet:setFilter("nearest", "nearest")
 
--- Cache constants for drawing:
-local SPRITE_WIDTH, SPRITE_HEIGHT = 32, 22
-local ROW_FRAME_COUNT = 10
-local GAP = 1
+Assets.SPRITE_WIDTH = 32
+Assets.SPRITE_HEIGHT = 22
+Assets.ROW_FRAME_COUNT = 10
+Assets.GAP = 1
 
-function assets.loadTileQuads(tileSize, tilesPerRow, tilesPerCol)
+-- Generic function to get a quad for an asset by name.
+function Assets.getQuad(name)
+  local mapping = Assets.itemMapping[name]
+  if not mapping then return nil end
+  local x = (mapping.col - 1) * Assets.TILE_SIZE
+  local y = (mapping.row - 1) * Assets.TILE_SIZE
+  return love.graphics.newQuad(x, y, Assets.TILE_SIZE, Assets.TILE_SIZE, Assets.objectSpriteSheet:getDimensions())
+end
+
+-- Optionally, cache quads to avoid recreating them
+Assets.quadCache = {}
+function Assets.getCachedQuad(name)
+  if not Assets.quadCache[name] then
+    Assets.quadCache[name] = Assets.getQuad(name)
+  end
+  return Assets.quadCache[name]
+end
+
+function Assets.loadTileQuads(tileSize, tilesPerRow, tilesPerCol)
     local tileQuads = {}
-    local imgWidth, imgHeight = assets.objectSpriteSheet:getDimensions()
+    local imgWidth, imgHeight = Assets.objectSpriteSheet:getDimensions()
     for row = 0, tilesPerCol - 1 do
         for col = 0, tilesPerRow - 1 do
             local tileIndex = (row * tilesPerRow) + col + 1
@@ -33,7 +174,7 @@ end
 
 -- Generic helper: Create a quad for a given frame with a base Y offset.
 -- Now the spriteSheet is passed in as a parameter.
-function assets.getQuadWithOffset(frame, baseYOffset, rowFrameCount, spriteWidth, spriteHeight, gap, spriteSheet)
+function Assets.getQuadWithOffset(frame, baseYOffset, rowFrameCount, spriteWidth, spriteHeight, gap, spriteSheet)
     local x, y
     if frame <= rowFrameCount then
         x = (frame - 1) * spriteWidth
@@ -46,12 +187,12 @@ function assets.getQuadWithOffset(frame, baseYOffset, rowFrameCount, spriteWidth
 end
 
 -- Generic helper: Generate an animation sequence from startFrame to endFrame.
-function assets.generateAnimation(startFrame, endFrame, baseYOffset, rowFrameCount, spriteWidth, spriteHeight, gap, spriteSheet)
+function Assets.generateAnimation(startFrame, endFrame, baseYOffset, rowFrameCount, spriteWidth, spriteHeight, gap, spriteSheet)
     local anim = {}
     for frame = startFrame, endFrame do
-        table.insert(anim, assets.getQuadWithOffset(frame, baseYOffset, rowFrameCount, spriteWidth, spriteHeight, gap, spriteSheet))
+        table.insert(anim, Assets.getQuadWithOffset(frame, baseYOffset, rowFrameCount, spriteWidth, spriteHeight, gap, spriteSheet))
     end
     return anim
 end
 
-return assets
+return Assets
