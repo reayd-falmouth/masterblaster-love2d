@@ -86,6 +86,13 @@ function love.keypressed(key)
     end
 end
 
+function love.keyreleased(key)
+    log.debug("love.keyreleased: " .. key)
+    if currentState.keyreleased then
+        currentState.keyreleased(key)
+    end
+end
+
 -- Function to switch states and manage music
 function switchState(newState, musicFile)
     if currentMusic then

@@ -145,6 +145,17 @@ function Game.keypressed(key)
     end
 end
 
+function Game.keyreleased(key)
+    if gameStarted and gameTime > 0 then
+        for _, p in ipairs(Game.players) do
+            if p.keyreleased then
+                p:keyreleased(key)
+            end
+        end
+    end
+end
+
+
 function Game.exitToMenu()
     gameStarted = false
     gameMusic:stop()

@@ -68,6 +68,19 @@ function Player:keypressed(key)
     end
 end
 
+function Player:keyreleased(key)
+    log.debug("Player:keyreleased received: " .. key)
+    if key == "space" and self.timebomb then
+        for _, bomb in ipairs(Game.bombs) do
+            if bomb.owner == self and bomb.waiting then
+                bomb.waiting = false
+                log.debug("Bomb timer resumed")
+            end
+        end
+    end
+end
+
+
 function Player:dropBomb()
     if not Game.bombs then Game.bombs = {} end
 
@@ -82,15 +95,15 @@ function Player:dropBomb()
     -- Check if the player can drop more bombs
     if bombCount < self.bombs then
         if self.remote then
-            print("Remote bomb activated: use cursor keys to move the bomb.")
+            log.debug("Remote bomb activated: use cursor keys to move the bomb.")
             -- Implement remote bomb logic if needed
         else
             local bomb = Bomb:new(self)
             table.insert(Game.bombs, bomb)
-            print("Bomb dropped at (" .. bomb.x .. ", " .. bomb.y .. ")")
+            log.debug("Bomb dropped at (" .. bomb.x .. ", " .. bomb.y .. ")")
         end
     else
-        print("You have reached your bomb limit!")
+        log.warning("You have reached your bomb limit!")
     end
 end
 
@@ -167,7 +180,7 @@ function Player:new(playerIndex)
     self.phase = false  -- walk through walls, spirte becomes translucent, time limit
     self.ghost = false  -- invisible and can walk through walls, special sprite animation
     self.speed = 35 -- the speed the player moves at
-    self.fastIgnition = false -- changes so that the user only drops a single bomb, which is ignited upon releasing the spacebar
+    self.timebomb = false -- changes so that the user only drops a single bomb, which is ignited upon releasing the spacebar
     self.stopped = false -- temporarily causes the players movement to halt
     self.money = 0 + (self.stats.money or 0) -- how much money (coins)  they have. this carries over matches.
     self.remote = false -- allows the user to move bombs with the cursors, so when space is pressed movement is transffered to the bomb, player is stopped
