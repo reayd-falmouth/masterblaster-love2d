@@ -48,7 +48,7 @@ function Overs.draw()
     love.graphics.printf("PRESS ANY BUTTON TO RESTART", 0, spriteY + SPRITE_HEIGHT + 20, VIRTUAL_WIDTH, "center")
 end
 
-function Overs.keypressed(key)
+function Overs:keypressed(key)
     -- On key press, transition back to the menu screen.
     switchState(Menu)
 end

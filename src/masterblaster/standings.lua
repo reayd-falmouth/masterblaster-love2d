@@ -5,6 +5,7 @@ local Assets = require("assets")
 local PlayerStats = require("stats")  -- persistent stats module
 local GameOver = require("overs")
 local UITheme = require("theme")
+local Shop = require("shop")
 
 local Standings = {}
 Standings.__index = Standings
@@ -37,8 +38,9 @@ function Standings.load()
     if not soundEffect then
         soundEffect = Audio.sfxSources.bingo
         soundEffect:setLooping(false)
-        soundEffect:play()
     end
+
+    soundEffect:play()
 end
 
 function Standings.update(dt)
@@ -58,6 +60,10 @@ function Standings.update(dt)
 
         if tournamentWon then
             switchState(GameOver)
+        elseif GameSettings.shop == "ON" then
+            print("Moving to shop")
+            Shop.load()
+            switchState(Shop)
         else
             switchState(Game)
         end
@@ -100,8 +106,5 @@ function Standings.draw()
         end
     end
 end
-
-
-
 
 return Standings

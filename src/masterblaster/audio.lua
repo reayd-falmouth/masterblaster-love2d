@@ -4,6 +4,8 @@ local Audio = {
     -- Separate volume for music and SFX
     musicVolume = 1.0,
     sfxVolume   = 1.0,
+    musicPitch  = 1.5,
+    sfxPitch    = 1.5,
 
     -- Tables to hold your music and SFX sources
     musicSources = {},

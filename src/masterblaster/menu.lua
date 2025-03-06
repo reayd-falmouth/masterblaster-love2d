@@ -3,6 +3,7 @@ local MainMenu = {}
 local Font = require("fonts")
 local UITheme = require("theme")  -- Import shared colors
 local Game = require("game")
+local Shop = require("shop")
 
 GameSettings = require("settings")
 PlayerStats = require("stats")
@@ -121,7 +122,8 @@ function MainMenu.keypressed(key)
         end
     elseif key == "return" or key == "kpenter" then
         PlayerStats.init(GameSettings.players)
-        switchState(Game) -- Switch to game state
+        --switchState(Game) -- Switch to game state
+        switchState(Shop) -- Switch to game state
     end
 end
 

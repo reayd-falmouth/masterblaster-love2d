@@ -7,10 +7,17 @@ Stats.players = {}
 
 -- Initialize stats for the given number of players.
 function Stats.init(numPlayers)
+    -- Decide what the starting money should be
+    local startingMoney = 0
+    if GameSettings.startMoney == "ON" then
+        startingMoney = GameSettings.startMoneyAmount or 0
+    end
+
     for i = 1, numPlayers do
         Stats.players[i] = {
-            wins = 0,
-            money = 0  -- money persists across matches and shops
+            purchased = {},
+            wins  = 0,
+            money = startingMoney -- if startMoney=ON, this is set above
         }
     end
 end
