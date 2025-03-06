@@ -28,7 +28,7 @@ Assets.ITEM_DEFINITIONS = {
     shopItem = true
   },
   {
-    enabled = true,
+    enabled = false,
     key = "superman",
     name = "SUPERMAN",
     cost = 2,
@@ -37,7 +37,7 @@ Assets.ITEM_DEFINITIONS = {
     shopItem = true
   },
   {
-    enabled = true,
+    enabled = false,
     key = "protection",
     name = "PROTECTION",
     cost = 3,
@@ -46,7 +46,7 @@ Assets.ITEM_DEFINITIONS = {
     shopItem = true
   },
   {
-    enabled = true,
+    enabled = false,
     key = "ghost",
     name = "GHOST",
     cost = 3,
@@ -65,7 +65,7 @@ Assets.ITEM_DEFINITIONS = {
     shopItem = true
   },
   {
-    enabled = true,
+    enabled = false,
     key = "death",
     name = "DEATH",
     cost = 0,  -- Not available in shop
@@ -74,7 +74,7 @@ Assets.ITEM_DEFINITIONS = {
     shopItem = false
   },
   {
-    enabled = true,
+    enabled = false,
     key = "special",
     name = "SPECIAL",
     cost = 0,  -- Not available in shop
@@ -92,7 +92,7 @@ Assets.ITEM_DEFINITIONS = {
     shopItem = true
   },
   {
-    enabled = true,
+    enabled = false,
     key = "stopped",
     name = "STOPPED",
     cost = 0,  -- Not available in shop
@@ -111,7 +111,7 @@ Assets.ITEM_DEFINITIONS = {
     shopItem = false
   },
   {
-    enabled = true,
+    enabled = false,
     key = "controller",
     name = "CONTROLLER",
     cost = 4,
