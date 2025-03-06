@@ -37,8 +37,6 @@ local function playItemSound(key)
 end
 
 -- Helper function: choose an item based on the defined weights from Assets.
--- Helper function: choose an item based on the defined weights from Assets.
--- Helper function: choose an item based on the defined weights from Assets.
 local function chooseItem()
     local validItems = {}
     for _, item in ipairs(Assets.ITEM_DEFINITIONS) do
@@ -101,7 +99,29 @@ function Item:spawn(x, y)
         return nil
     end
 
-    return Item:new(x, y, itemDef)
+    local item = Item:new(x, y, itemDef)
+
+    -- If the chosen item is "random", choose an underlying effect but keep the sprite/quad unchanged.
+    if itemDef.key == "random" then
+        local validEffects = {}
+        for _, def in ipairs(Assets.ITEM_DEFINITIONS) do
+            -- Exclude "random" and "none" so that we don't override with invalid effects.
+            if def.enabled and def.key ~= "random" and def.key ~= "none" then
+                table.insert(validEffects, def)
+            end
+        end
+        if #validEffects > 0 then
+            local underlying = validEffects[math.random(#validEffects)]
+            -- Override the item's effect properties with the underlying random effect,
+            -- but keep the sprite and quad (the "?" appearance) from the "random" definition.
+            item.key = underlying.key
+            item.name = underlying.name
+            item.duration = underlying.duration
+            -- If there are additional properties to copy (like cost, etc.), add them here.
+        end
+    end
+
+    return item
 end
 
 -- Called when a Fireball or bomb destroys this block.

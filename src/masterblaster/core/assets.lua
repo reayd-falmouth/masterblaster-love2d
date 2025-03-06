@@ -74,12 +74,12 @@ Assets.ITEM_DEFINITIONS = {
     shopItem = false
   },
   {
-    enabled = false,
-    key = "special",
-    name = "SPECIAL",
+    enabled = true,
+    key = "random",
+    name = "RANDOM",
     cost = 0,  -- Not available in shop
     row = 3, col = 9,
-    weight = 2,
+    weight = 5,
     shopItem = false
   },
   {
@@ -88,7 +88,7 @@ Assets.ITEM_DEFINITIONS = {
     name = "TIMEBOMB",
     cost = 2,
     row = 3, col = 10,
-    weight = 50,
+    weight = 5,
     shopItem = true
   },
   {

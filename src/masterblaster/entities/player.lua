@@ -47,8 +47,6 @@ function Player:applyItemEffect(item)
         self.speed = self.speed + 20  -- Or adjust accordingly.
     elseif item.key == "death" then
         self:die()  -- Call your death method.
-    elseif item.key == "special" then
-        log.debug("Apply random special logic")
     elseif item.key == "timebomb" then
         self.timebomb = true
     elseif item.key == "stopped" then
