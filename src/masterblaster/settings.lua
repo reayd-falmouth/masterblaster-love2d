@@ -1,13 +1,13 @@
 -- src/settings.lua
 local GameSettings = {
     winsNeeded = 3,
-    players = 1,
-    shop = "ON",
-    shrinking = "ON",
-    fastIgnition = "ON",
+    players = 2,
+    shop = "OFF",
+    shrinking = "OFF",
+    fastIgnition = "OFF",
     startMoney = "OFF",
     normalLevel = "YES",
-    gambling = "YES"
+    gambling = "NO"
 }
 
 return GameSettings

@@ -20,59 +20,37 @@ local deathSound = Audio.sfxSources.die
 function Player:clearBuff(buffType)
     if buffType == "yingyang" then
         self.yingyang = false
-    elseif buffType == "invisible" then
-        self.invisible = false
+    elseif buffType == "ghost" then
+        self.ghost = false
     end
     -- Add additional cases if you introduce more buff types
     self.collider:setCollisionClass("Player")
 end
 
 function Player:applyItemEffect(item)
-
-    if item.duration then
-        -- If there's an active buff, clear its effect before applying the new one.
-        if self.currentBuff then
-            self:clearBuff(self.currentBuff)
-        end
-        -- Set the new buff and its timer.
-        self.currentBuff = item.type
-        self.buffTimer = item.duration  -- Duration should come from ITEM_DEFINITIONS
-    end
-
-        -- Apply the effect immediately.
-    if item.type == "invisible" then
-        self.invisible = true
-        -- Switch to a collision class that ignores destructible blocks
-        self.collider:setCollisionClass("PlayerInvisible")
+     -- Apply the effect immediately.
+    if item.type == "bomb" then
+        self.bombs = self.bombs + 1
+    elseif item.type == "power" then
+        self.power = self.power + 1
+    elseif item.type == "superman" then
+        self.superman = true
+    elseif item.type == "ghost" then
+        self.ghost = true
     elseif item.type == "yingyang" then
         self.yingyang = true
-        self.collider:setCollisionClass("PlayerInvincible")
-    else
-        if item.type == "bomb" then
-            self.bombs = self.bombs + 1
-        elseif item.type == "power" then
-            self.power = self.power + 1
-        elseif item.type == "superman" then
-            self.superman = true
-        elseif item.type == "speed" then
-            self.speed = self.speed + 20  -- Or adjust accordingly.
-        elseif item.type == "fastIgnition" then
-            self.fastIgnition = true
-        elseif item.type == "stopped" then
-            self.stopped = true
-        elseif item.type == "money" then
-            self.money = self.money + 1  -- Change value as needed.
-        elseif item.type == "remote" then
-            self.remote = true
-        elseif item.type == "death" then
-            self:die()  -- Call your death method.
-        end
-    end
-end
-
-function Player:keypressed(key)
-    if key == "space" then
-        self:dropBomb()
+    elseif item.type == "speed" then
+        self.speed = self.speed + 20  -- Or adjust accordingly.
+    elseif item.type == "fastIgnition" then
+        self.fastIgnition = true
+    elseif item.type == "stopped" then
+        self.stopped = true
+    elseif item.type == "money" then
+        self.money = self.money + 1  -- Change value as needed.
+    elseif item.type == "remote" then
+        self.remote = true
+    elseif item.type == "death" then
+        self:die()  -- Call your death method.
     end
 end
 
@@ -156,7 +134,7 @@ function Player:new(playerIndex)
                                              SPRITE_WIDTH, SPRITE_HEIGHT, GAP, spriteSheet),
         remote    = Assets.generateAnimation(22,24, self.baseYOffset, ROW_FRAME_COUNT,
                                              SPRITE_WIDTH, SPRITE_HEIGHT, GAP, spriteSheet),
-        invisible = Assets.generateAnimation(25,30, self.baseYOffset, ROW_FRAME_COUNT,
+        ghost = Assets.generateAnimation(25,30, self.baseYOffset, ROW_FRAME_COUNT,
                                              SPRITE_WIDTH, SPRITE_HEIGHT, GAP, spriteSheet)
     }
 
@@ -174,8 +152,8 @@ function Player:new(playerIndex)
     self.power = 0 -- the additional blast distance of fireballs
     self.superman = false -- can push single blocks and bombs
     self.yingyang = false  -- protected against fireballs, sprite becomes solid white for limited time
-    self.invisible = false  -- walk through walls, spirte becomes translucent, time limit
-    self.ghost = false  -- invisible and can walk through walls, special sprite animation
+    self.ghost = false  -- walk through walls, spirte becomes translucent, time limit
+    self.ghost = false  -- ghost and can walk through walls, special sprite animation
     self.speed = 30 -- the speed the player moves at
     self.fastIgnition = false -- changes so that the user only drops a single bomb, which is ignited upon releasing the spacebar
     self.stopped = false -- temporarily causes the players movement to halt
@@ -233,29 +211,21 @@ local function updateMovement(self, dt)
 
     if love.keyboard.isDown("up") then
         vy = vy - self.speed
-        if not self:isBuffActive("invisible") then
-            self.currentAnimation = self.animations.moveUp
-        end
+        self.currentAnimation = self.animations.moveUp
         self.moving = true
     elseif love.keyboard.isDown("down") then
         vy = vy + self.speed
-        if not self:isBuffActive("invisible") then
-            self.currentAnimation = self.animations.moveDown
-        end
+        self.currentAnimation = self.animations.moveDown
         self.moving = true
     end
 
     if love.keyboard.isDown("left") then
         vx = vx - self.speed
-        if not self:isBuffActive("invisible") then
-            self.currentAnimation = self.animations.moveLeft
-        end
+        self.currentAnimation = self.animations.moveLeft
         self.moving = true
     elseif love.keyboard.isDown("right") then
         vx = vx + self.speed
-        if not self:isBuffActive("invisible") then
-            self.currentAnimation = self.animations.moveRight
-        end
+        self.currentAnimation = self.animations.moveRight
         self.moving = true
     end
 
@@ -266,38 +236,32 @@ local function updateMovement(self, dt)
 end
 
 local function updateAnimation(self, dt)
-    if self:isBuffActive("invisible") then
-        if self.animations.remote then
-            self.currentAnimation = self.animations.remote
-        end
-
-        if self.moving then
-            self.animationTimer = self.animationTimer + dt
-            if self.animationTimer >= self.frameDuration then
-                self.animationTimer = self.animationTimer - self.frameDuration
-                self.currentFrame = (self.currentFrame % #self.currentAnimation) + 1
-            end
-        else
-            self.currentFrame = 1
-            self.animationTimer = 0
+    if self.moving then
+        self.animationTimer = self.animationTimer + dt
+        if self.animationTimer >= self.frameDuration then
+            self.animationTimer = self.animationTimer - self.frameDuration
+            self.currentFrame = (self.currentFrame % #self.currentAnimation) + 1
         end
     else
-        if self.moving then
-            self.animationTimer = self.animationTimer + dt
-            if self.animationTimer >= self.frameDuration then
-                self.animationTimer = self.animationTimer - self.frameDuration
-                self.currentFrame = (self.currentFrame % #self.currentAnimation) + 1
-            end
-        else
-            self.currentFrame = 1
-            self.animationTimer = 0
-        end
+        self.currentFrame = 1
+        self.animationTimer = 0
+    end
+end
+
+function Player:keypressed(key)
+    if key == "space" then
+        self:dropBomb()
     end
 end
 
 -- Public method: update
 function Player:update(dt)
     if self.toRemove then return end
+
+        -- Check collision with a Fireball if collider still exists
+    if self.collider and self.collider:enter("Fireball") then
+        self:die()  -- Switch to death logic
+    end
 
     updateBuff(self, dt)
 
