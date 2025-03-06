@@ -204,7 +204,8 @@ function Game.reset()
         Game.colliders = {}
     end
     Game.items = {}
-    Game.Bombs = {}
+    Game.bombs = {}
+    Game.fireballs = {}
 
     -- (Optional) Destroy player colliders if needed, or simply reinitialize the world.
     -- Reinitialize the physics world:
