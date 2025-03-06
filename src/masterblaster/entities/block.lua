@@ -101,7 +101,7 @@ function Block:destroyBlock()
         -- Spawn an item at this block's location using the new module.
         local newItem = Item:spawn(self.x, self.y)
         if newItem then
-            print("New item spawned: ", newItem.type)
+            print("New item spawned: ", newItem.key)
             table.insert(Game.items, newItem)
         end
 

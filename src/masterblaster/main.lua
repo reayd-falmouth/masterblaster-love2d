@@ -1,5 +1,4 @@
-require("config.globals")
-log = require("lib.logging")
+-- main.lua
 local Audio = require("system.audio")
 local Title = require("scenes.title")
 local currentState = Title

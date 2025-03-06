@@ -19,7 +19,6 @@ local warpSound = Audio.sfxSources.warp
 
 -- Helper function: plays an item-based sound based on the item key.
 local function playItemSound(key)
-    print("playing sound: " .. key)
     if key == "coin" then
         cashSound:play()
     elseif key == "speedUp" then
@@ -121,6 +120,7 @@ function Item:update(dt)
 
     local collision_type = nil
     if self.collider and self.collider:enter("Player") then
+        log.debug("Item: " .. self.key .. " and player collided")
         collision_type = "Player"
     end
 

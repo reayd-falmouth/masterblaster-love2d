@@ -65,12 +65,12 @@ Assets.ITEM_DEFINITIONS = {
     shopItem = true
   },
   {
-    enabled = false,
+    enabled = true,
     key = "death",
     name = "DEATH",
     cost = 0,  -- Not available in shop
     row = 3, col = 8,
-    weight = 5,
+    weight = 50,
     shopItem = false
   },
   {

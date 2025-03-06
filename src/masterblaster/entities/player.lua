@@ -31,49 +31,32 @@ function Player:clearBuff(buffType)
 end
 
 function Player:applyItemEffect(item)
-
-    if item.duration then
-         print("[DEBUG] Applying item: " .. item.type)
-        -- If there's an active buff, clear its effect before applying the new one.
-        if self.currentBuff then
-            self:clearBuff(self.currentBuff)
-        end
-
-        -- Set the new buff and its timer.
-        self.currentBuff = item.type
-        self.buffTimer = item.duration  -- Duration should come from ITEM_DEFINITIONS
-
-        -- Apply the effect immediately.
-        if item.type == "yingyang" then
-            self.yingyang = true
-            -- Change collision class so fireball collisions are ignored.
-            self.collider:setCollisionClass("PlayerInvincible")
-        elseif item.type == "phase" then
-            self.phase = true
-        elseif item.type == "ghost" then
-            self.ghost = true
-        end
-    else
-        if item.type == "bomb" then
-            self.bombs = self.bombs + 1
-        elseif item.type == "power" then
-            self.power = self.power + 1
-        elseif item.type == "superman" then
-            self.superman = true
-        elseif item.type == "speed" then
-            self.speed = self.speed + 20  -- Or adjust accordingly.
-        elseif item.type == "fastIgnition" then
-            self.fastIgnition = true
-        elseif item.type == "stopped" then
-            self.stopped = true
-        elseif item.type == "money" then
-            self.money = self.money + 1  -- Change value as needed.
-            self.stats.money = self.stats.money + 1
-        elseif item.type == "remote" then
-            self.remote = true
-        elseif item.type == "death" then
-            self:die()  -- Call your death method.
-        end
+    log.debug("Applying item " .. item.key .. " to player")
+    if item.key == "bomb" then
+        self.bombs = self.bombs + 1
+    elseif item.key == "powerUp" then
+        self.power = self.power + 1
+    elseif item.key == "superman" then
+        self.superman = true
+    elseif item.key == "protection" then
+        self.protection = true
+    elseif item.key == "ghost" then
+        self.ghost = true
+    elseif item.key == "speedUp" then
+        self.speed = self.speed + 20  -- Or adjust accordingly.
+    elseif item.key == "death" then
+        self:die()  -- Call your death method.
+    elseif item.key == "special" then
+        log.debug("Apply random special logic")
+    elseif item.key == "timebomb" then
+        self.timebomb = true
+    elseif item.key == "stopped" then
+        self.stopped = true
+    elseif item.key == "coin" then
+        self.money = self.money + 1  -- Change value as needed.
+        self.stats.money = self.stats.money + 1
+    elseif item.key == "controller" then
+        self.remote = true
     end
 end
 

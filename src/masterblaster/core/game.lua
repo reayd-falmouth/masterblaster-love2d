@@ -213,13 +213,14 @@ function Game.reset()
     Game.world:setQueryDebugDrawing(DEBUG)
 
     -- Register your collision classes
-    Game.world:addCollisionClass('Player', { enters = {'Fireball'} })
+    Game.world:addCollisionClass('Player', { enters = {'Fireball', 'Item'} })
     Game.world:addCollisionClass('Fireball', { enters = {'Block', 'Item'} })
     Game.world:addCollisionClass('Block', { enters = {'Fireball'} })
     Game.world:addCollisionClass('Bomb', { enters = {'Fireball'} })
-    Game.world:addCollisionClass('PlayerInvincible', { ignores = {'Fireball'}})
-    Game.world:addCollisionClass('PlayerGhost', { ignores = {'Block'}})
-    Game.world:addCollisionClass('Item', { enters = {'Player', 'Fireball', 'PlayerInvincible', 'PlayerGhost'} })
+    Game.world:addCollisionClass('Item', { enters = {'Player', 'Fireball'} })
+    --Game.world:addCollisionClass('PlayerInvincible', { ignores = {'Fireball'}})
+    --Game.world:addCollisionClass('PlayerGhost', { ignores = {'Block'}})
+
     -- Register the collision callbacks with the physics world.
 
     -- Reset other game state variables:
@@ -438,6 +439,13 @@ function Game.draw()
                 end
             end
 
+            -- CHANGED: 3) Draw items from items
+            if Game.items then
+                for _, item in ipairs(Game.items) do
+                    item:draw()
+                end
+            end
+
             -- 3) Draw bombs
             if Game.bombs then
                 for _, bomb in ipairs(Game.bombs) do
@@ -454,13 +462,6 @@ function Game.draw()
             if Game.fireBalls then
                 for _, fireball in ipairs(Game.fireBalls) do
                     fireball:draw()
-                end
-            end
-
-            -- In your main drawing routine (for instance, in game.lua or main.lua)
-            if Game.items then
-                for _, item in ipairs(Game.items) do
-                    item:draw()
                 end
             end
 
