@@ -1,13 +1,16 @@
 -- src/ui/menu.lua
 local MainMenu = {}
 local Font = require("fonts")
-local GameSettings = require("settings")
 local UITheme = require("theme")  -- Import shared colors
+local Game = require("game")
+
+GameSettings = require("settings")
+PlayerStats = require("stats")
 
 -- A list of menu items that can be navigated and toggled
 local menuItems = {
     { label = "WINS NEEDED", value = GameSettings.winsNeeded, choices = {1, 2, 3, 4, 5, 6, 7, 8, 9}, key = "winsNeeded" },
-    { label = "PLAYERS", value = GameSettings.players, choices = {1, 2, 3, 4, 5}, key = "players" },
+    { label = "PLAYERS", value = GameSettings.players, choices = {2, 3, 4, 5}, key = "players" },
     { label = "SHOP", value = GameSettings.shop, choices = {"ON", "OFF"}, key = "shop" },
     { label = "SHRINKING", value = GameSettings.shrinking, choices = {"ON", "OFF"}, key = "shrinking" },
     { label = "FASTIGNITION", value = GameSettings.fastIgnition, choices = {"ON", "OFF"}, key = "fastIgnition" },
@@ -117,8 +120,8 @@ function MainMenu.keypressed(key)
             GameSettings[item.key] = item.value
         end
     elseif key == "return" or key == "kpenter" then
-        local item = menuItems[selectedIndex]
-        switchState(require("game")) -- Switch to game state
+        PlayerStats.init(GameSettings.players)
+        switchState(Game) -- Switch to game state
     end
 end
 

@@ -1,5 +1,4 @@
 -- game.lua
-local GameSettings = require("settings")
 local UITheme = require("theme")  -- Import shared colors
 local Spawns = require("spawns")
 local windfield = require ("lib.windfield")
@@ -285,13 +284,13 @@ function Game.update(dt)
         end
 
         -- 1) Update players
-        for i = #Game.players, 1, -1 do
-            local p = Game.players[i]
-            p:update(dt)
-            if p.toRemove then
-                table.remove(Game.players, i)
-            end
-        end
+        --for i = #Game.players, 1, -1 do
+        --    local p = Game.players[i]
+        --    p:update(dt)
+        --    if p.toRemove then
+        --        table.remove(Game.players, i)
+        --    end
+        --end
 
         -- 2) Update bombs
         if Game.bombs then
@@ -340,6 +339,40 @@ function Game.update(dt)
                     table.remove(Game.items, i)
                 end
             end
+        end
+
+        -- Existing player, bomb, fireball, and block update loops...
+        for i = #Game.players, 1, -1 do
+            local p = Game.players[i]
+            p:update(dt)
+            if p.toRemove then
+                table.remove(Game.players, i)
+            end
+        end
+
+        -- 3-second survival check for win condition:
+        local activePlayers = {}
+        for i, p in ipairs(Game.players) do
+            if not p.toRemove then
+                table.insert(activePlayers, p)
+            end
+        end
+
+        if #activePlayers <= 1 then
+            if not Game.winTimer then
+                Game.winTimer = 0
+            end
+            Game.winTimer = Game.winTimer + dt
+
+            if Game.winTimer >= 3 then
+                if #activePlayers == 1 then
+                    local winner = activePlayers[1]
+                    PlayerStats.addWin(winner.index)
+                end
+                Game.exitToStandings()
+            end
+        else
+            Game.winTimer = nil
         end
 
     else
@@ -437,6 +470,5 @@ function Game.draw()
         end
     end
 end
-
 
 return Game

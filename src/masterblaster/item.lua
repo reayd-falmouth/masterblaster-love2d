@@ -16,7 +16,7 @@ local ITEM_DEFINITIONS = {
   { name = "bomb",        row = 2, col = 20, weight = 10 },
   { name = "power",       row = 3, col = 1,  weight = 10 },
   --{ name = "superman",    row = 3, col = 2,  weight = 3 },
-  --{ name = "yingyang",    row = 3, col = 4,  weight = 5 },
+  --{ name = "shield",    row = 3, col = 4,  weight = 5 },
   --{ name = "ghost",       row = 3, col = 5,  weight = 50,  duration = 10 },
   { name = "speed",       row = 3, col = 7,  weight = 10 },
   --{ name = "death",       row = 3, col = 8,  weight = 5 },

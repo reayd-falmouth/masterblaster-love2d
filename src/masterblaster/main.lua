@@ -2,8 +2,7 @@ require("globals")
 LOGGER = require("logging")
 local Audio = require("audio")
 local Title = require("title")
-local Menu = require("menu")
-local currentState = Menu
+local currentState = Title
 
 -- These variables will be computed on window resize
 local scale, offsetX, offsetY = 1, 0, 0

@@ -4,9 +4,16 @@ local assets = {}
 assets.objectSpriteSheet = love.graphics.newImage("assets/sprites/objects.png")
 assets.objectSpriteSheet:setFilter("nearest", "nearest")
 
+local TILE_SIZE = 16
+
 -- Load the player sprite sheet once
 assets.playerSpriteSheet = love.graphics.newImage("assets/sprites/player.png")
 assets.playerSpriteSheet:setFilter("nearest", "nearest")
+
+-- Cache constants for drawing:
+local SPRITE_WIDTH, SPRITE_HEIGHT = 32, 22
+local ROW_FRAME_COUNT = 10
+local GAP = 1
 
 function assets.loadTileQuads(tileSize, tilesPerRow, tilesPerCol)
     local tileQuads = {}
