@@ -47,43 +47,46 @@ local function spawnFireBall(x, y, delay)
 end
 
 function Bomb:new(player)
+    local self = setmetatable({}, Bomb)
+
     -- Snap bomb to the center of the grid block.
     local gridX = math.floor(player.x / tileSize) * tileSize + tileSize / 2
     local gridY = math.floor(player.y / tileSize) * tileSize + tileSize / 2
 
     -- Default bomb power (if player.power is nil, default to 1)
-    local power = player.power + 2
+    self.x = gridX
+    self.y = gridY
+    self.power = player.power + 2
+    self.timer = 3              -- Countdown until explosion.
+    self.state = "idle"         -- "idle", "moving", "exploding"
+    self.owner = player
+    self.spriteSheet = spriteSheet
+    self.animation = idleAnimation
+    self.currentFrame = 1
+    self.frameDuration = FRAME_DURATION
+    self.animationTimer = 0
+    self.activationDelay = 1    -- Time in seconds before bomb collision becomes active.
+    self.toRemove = false
 
-    local bomb = {
-        x = gridX,
-        y = gridY,
-        power = power,
-        timer = 3,              -- Countdown until explosion.
-        state = "idle",         -- "idle", "moving", "exploding"
-        owner = player,
-        spriteSheet = spriteSheet,
-        animation = idleAnimation,
-        currentFrame = 1,
-        frameDuration = FRAME_DURATION,
-        animationTimer = 0,
-        -- Create the collider as a rectangle centered on the bomb.
-        --collider = Game.world:newRectangleCollider(gridX - tileSize/2, gridY - tileSize/2, tileSize, tileSize),
-        collider = Game.world:newCircleCollider(
-            gridX,
-            gridY,
-            (COLLIDER_RADIUS / 2)
-        ),
-        activationDelay = 1,   -- Time in seconds before bomb collision becomes active.
-        toRemove = false
-    }
-    bomb.collider:setSensor(true)  -- Disable collision initially.
-    bomb.collider:setType("static")
-    bomb.collider:setCollisionClass("Bomb")
-    bomb.collider:setObject(bomb)
-    --bomb.collider:setUserData(bomb)
-    setmetatable(bomb, Bomb)
-    return bomb
+    -- Create the collider as a circle centered on the bomb.
+    self.collider = Game.world:newCircleCollider(gridX, gridY, (COLLIDER_RADIUS / 2))
+    self.collider:setSensor(true)  -- Disable collision initially.
+    self.collider:setType("static")
+    self.collider:setCollisionClass("Bomb")
+    self.collider:setObject(self)
+
+    -- Set waiting flag if player is in timebomb mode.
+    if player.timebomb then
+        self.waiting = true
+        self.timer = 0
+        log.debug("Timebomb mode active: bomb waiting for key release")
+    else
+        self.waiting = false
+    end
+
+    return self
 end
+
 
 function Bomb:update(dt)
     -- If we've already flagged for removal, skip updates entirely
@@ -95,7 +98,11 @@ function Bomb:update(dt)
         self.toRemove = true -- remove the bomb before animation completed
     end
 
-    self.timer = self.timer - dt
+    -- Only count down the timer if not waiting for space release.
+    if not self.waiting then
+        self.timer = self.timer - dt
+    end
+
     self.animationTimer = self.animationTimer + dt
     if self.animationTimer >= self.frameDuration then
         self.animationTimer = self.animationTimer - self.frameDuration
@@ -110,7 +117,7 @@ function Bomb:update(dt)
         end
     end
 
-    if self.timer <= 0 and self.state ~= "exploding" then
+    if self.timer <= 0 and self.state ~= "exploding" and not self.waiting then
         self:explode()
     end
 

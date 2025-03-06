@@ -27,6 +27,8 @@ local function playItemSound(key)
         pickupSound:play()
     elseif key == "superman" then
         bubbleSound:play()
+    elseif key == "timebomb" then
+        bubbleSound:play()
     elseif key == "ghost" then
         warpSound:play()
     elseif key == "yingyang" then

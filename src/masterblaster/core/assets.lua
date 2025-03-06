@@ -88,7 +88,7 @@ Assets.ITEM_DEFINITIONS = {
     name = "TIMEBOMB",
     cost = 2,
     row = 3, col = 10,
-    weight = 3,
+    weight = 50,
     shopItem = true
   },
   {
