@@ -1,5 +1,5 @@
 -- map.lua
-require("globals")
+require("config.globals")
 
 local map = {}
 

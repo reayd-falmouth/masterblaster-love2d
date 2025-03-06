@@ -1,7 +1,7 @@
 -- credits.lua
 local Credits = {}
-local Font = require("fonts")
-local UITheme = require("theme")
+local Font = require("system.fonts")
+local UITheme = require("core.theme")
 
 -- The credits text lines
 local creditsText = {
@@ -76,7 +76,7 @@ end
 
 function Credits.keypressed(key)
     -- Switch to your next state; for example, back to a title screen:
-    switchState(require("menu"))
+    switchState(require("scenes.menu"))
 end
 
 return Credits

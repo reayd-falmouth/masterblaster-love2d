@@ -1,6 +1,6 @@
 -- block.lua
-local Assets = require("assets")
-local Item = require("item")  -- Require the new items module
+local Assets = require("core.assets")
+local Item = require("entities.item")  -- Require the new items module
 local Block = {}
 Block.__index = Block
 

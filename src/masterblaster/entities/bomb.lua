@@ -1,6 +1,6 @@
-local Assets = require("assets")
-local Audio = require("audio")
-local Fireball = require("fireball")
+local Assets = require("core.assets")
+local Audio = require("system.audio")
+local Fireball = require("entities.fireball")
 local Bomb = {}
 Bomb.__index = Bomb
 

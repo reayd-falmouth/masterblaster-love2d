@@ -1,9 +1,9 @@
 -- src/ui/menu.lua
 local MainMenu = {}
-local Font = require("fonts")
-local UITheme = require("theme")  -- Import shared colors
-local Game = require("game")
-local Shop = require("shop")
+local Font = require("system.fonts")
+local UITheme = require("core.theme")  -- Import shared colors
+local Game = require("core.game")
+local Shop = require("scenes.shop")
 
 -- A list of menu items that can be navigated and toggled
 local menuItems = {
