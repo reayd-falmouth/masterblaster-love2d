@@ -13,7 +13,7 @@ logging.CRITICAL = 50
 local DEBUG = false
 
 -- Set log level based on DEBUG flag
-logging.LOG_LEVEL = logging.DEBUG
+logging.LOG_LEVEL = logging.ERROR
 
 -- Internal function to log messages
 local function log(level, level_name, message)
