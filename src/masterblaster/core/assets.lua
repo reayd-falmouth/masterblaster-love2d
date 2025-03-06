@@ -42,7 +42,7 @@ Assets.ITEM_DEFINITIONS = {
     name = "PROTECTION",
     cost = 3,
     row = 3, col = 4,
-    weight = 70,
+    weight = 3,
     shopItem = true
   },
   {

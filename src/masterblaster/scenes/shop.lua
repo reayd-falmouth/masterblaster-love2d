@@ -21,7 +21,7 @@ function Shop.drawObjectSprite(quad, x, y)
 end
 
 -- This function reinitializes the shop each time the shop state is entered.
-function Shop.init()
+function Shop.load()
     if GameSettings.shop == "OFF" then
         switchState(Game)
         return
@@ -58,10 +58,9 @@ end
 function Shop.update(dt)
     -- Handle animations or updates here if needed
 end
-
 function Shop.draw()
     local pStats = PlayerStats.players[Shop.currentPlayerIndex]
-    local screenWidth = love.graphics.getWidth()
+    local screenWidth = VIRTUAL_WIDTH  -- Use the virtual width for layout
 
     -- Isolate title drawing
     love.graphics.push()
@@ -98,6 +97,7 @@ function Shop.draw()
         love.graphics.pop()
     end
 end
+
 
 
 function Shop.drawItem(index, item, y, screenWidth, extraX, prizeX)
