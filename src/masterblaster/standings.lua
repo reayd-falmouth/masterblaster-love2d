@@ -62,7 +62,7 @@ function Standings.update(dt)
             switchState(GameOver)
         elseif GameSettings.shop == "ON" then
             print("Moving to shop")
-            Shop.load()
+            Shop.init()  -- Updated from Shop.load() to Shop.init()
             switchState(Shop)
         else
             switchState(Game)

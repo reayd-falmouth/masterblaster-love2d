@@ -10,14 +10,16 @@ Assets.TILE_SIZE = 16
 -- Your original item definitions.
 Assets.ITEM_DEFINITIONS = {
   {
+    enabled = true,
     key = "bomb",
     name = "BOMB",
     cost = 1,
     row = 2, col = 20,
     weight = 10,
-    shopItem = true
+    shopItem = true,
   },
   {
+    enabled = true,
     key = "powerUp",
     name = "POWER-UP",
     cost = 1,
@@ -26,6 +28,7 @@ Assets.ITEM_DEFINITIONS = {
     shopItem = true
   },
   {
+    enabled = true,
     key = "superman",
     name = "SUPERMAN",
     cost = 2,
@@ -34,6 +37,7 @@ Assets.ITEM_DEFINITIONS = {
     shopItem = true
   },
   {
+    enabled = true,
     key = "protection",
     name = "PROTECTION",
     cost = 3,
@@ -42,6 +46,7 @@ Assets.ITEM_DEFINITIONS = {
     shopItem = true
   },
   {
+    enabled = true,
     key = "ghost",
     name = "GHOST",
     cost = 3,
@@ -51,6 +56,7 @@ Assets.ITEM_DEFINITIONS = {
     shopItem = true
   },
   {
+    enabled = true,
     key = "speedUp",
     name = "SPEED-UP",
     cost = 4,
@@ -59,6 +65,7 @@ Assets.ITEM_DEFINITIONS = {
     shopItem = true
   },
   {
+    enabled = true,
     key = "death",
     name = "DEATH",
     cost = 0,  -- Not available in shop
@@ -67,6 +74,7 @@ Assets.ITEM_DEFINITIONS = {
     shopItem = false
   },
   {
+    enabled = true,
     key = "special",
     name = "SPECIAL",
     cost = 0,  -- Not available in shop
@@ -75,6 +83,7 @@ Assets.ITEM_DEFINITIONS = {
     shopItem = false
   },
   {
+    enabled = (GameSettings.fastIgnition == "ON"),
     key = "timebomb",
     name = "TIMEBOMB",
     cost = 2,
@@ -83,6 +92,7 @@ Assets.ITEM_DEFINITIONS = {
     shopItem = true
   },
   {
+    enabled = true,
     key = "stopped",
     name = "STOPPED",
     cost = 0,  -- Not available in shop
@@ -92,6 +102,7 @@ Assets.ITEM_DEFINITIONS = {
     shopItem = false
   },
   {
+    enabled = (GameSettings.shop == "ON"),
     key = "coin",
     name = "COIN",
     cost = 1,
@@ -100,6 +111,7 @@ Assets.ITEM_DEFINITIONS = {
     shopItem = false
   },
   {
+    enabled = true,
     key = "controller",
     name = "CONTROLLER",
     cost = 4,
@@ -108,6 +120,7 @@ Assets.ITEM_DEFINITIONS = {
     shopItem = true
   },
   {
+    enabled = true,
     key = "none",
     name = "NONE",
     cost = 0,

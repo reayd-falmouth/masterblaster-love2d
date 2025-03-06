@@ -68,6 +68,7 @@ function Player:applyItemEffect(item)
             self.stopped = true
         elseif item.type == "money" then
             self.money = self.money + 1  -- Change value as needed.
+            self.stats.money = self.stats.money + 1
         elseif item.type == "remote" then
             self.remote = true
         elseif item.type == "death" then
