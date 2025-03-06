@@ -116,7 +116,7 @@ Assets.ITEM_DEFINITIONS = {
     name = "CONTROLLER",
     cost = 4,
     row = 3, col = 13,
-    weight = 50,
+    weight = 70,
     shopItem = true
   },
   {

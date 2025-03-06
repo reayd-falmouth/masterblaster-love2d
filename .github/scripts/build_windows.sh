@@ -5,7 +5,7 @@ set -e
 # Parameters
 LOVE_VERSION=${1:-"11.5"}
 ARCH=${2:-"win64"}
-GAME_NAME="chaosbomber"
+GAME_NAME="masterblaster"
 LOVE_DOWNLOAD_URL="https://github.com/love2d/love/releases/download/${LOVE_VERSION}/love-${LOVE_VERSION}-${ARCH}.zip"
 BUILD_DIR="build"
 OUTPUT_ZIP="${GAME_NAME}-${LOVE_VERSION}-${ARCH}.zip"
@@ -27,7 +27,7 @@ mv "$BUILD_DIR/love-${LOVE_VERSION}-${ARCH}" "$BUILD_DIR/love"
 
 # Create .love archive
 echo "Creating ${GAME_NAME}.love..."
-cd src/chaosbomber || exit
+cd src/masterblaster || exit
 zip -9 -r "../../${BUILD_DIR}/${GAME_NAME}.love" .
 cd - > /dev/null
 
