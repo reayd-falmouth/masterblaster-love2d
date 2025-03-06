@@ -1,7 +1,7 @@
-local Assets = require("assets")
-local Audio = require("audio")
-local UITheme = require("theme")
-local Game = require("game")
+local Assets = require("core.assets")
+local Audio = require("system.audio")
+local UITheme = require("core.theme")
+local Game = require("core.game")
 local Shop = {}
 
 -- State variables

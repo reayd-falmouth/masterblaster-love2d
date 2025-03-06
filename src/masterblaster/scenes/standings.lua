@@ -1,11 +1,11 @@
 -- standings.lua
-local Audio = require("audio")
-local Game = require("game")
-local Assets = require("assets")
-local PlayerStats = require("stats")  -- persistent stats module
-local GameOver = require("overs")
-local UITheme = require("theme")
-local Shop = require("shop")
+local Audio = require("system.audio")
+local Game = require("core.game")
+local Assets = require("core.assets")
+local PlayerStats = require("core.stats")  -- persistent stats module
+local GameOver = require("scenes.overs")
+local UITheme = require("core.theme")
+local Shop = require("scenes.shop")
 
 local Standings = {}
 Standings.__index = Standings

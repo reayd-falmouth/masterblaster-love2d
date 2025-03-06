@@ -1,6 +1,6 @@
 -- item.lua
-local Assets = require("assets")
-local Audio = require("audio")
+local Assets = require("core.assets")
+local Audio = require("system.audio")
 local Item = {}
 Item.__index = Item
 

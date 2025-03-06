@@ -1,5 +1,5 @@
 -- conf.lua
-require("globals")
+require("config.globals")
 
 function love.conf(t)
     t.window.title = "Master Blaster " .. VERSION

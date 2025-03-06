@@ -1,8 +1,8 @@
 -- overs.lua
-local Assets = require("assets")
-local PlayerStats = require("stats")
-local Menu = require("menu")
-local UITheme = require("theme")
+local Assets = require("core.assets")
+local PlayerStats = require("core.stats")
+local Menu = require("scenes.menu")
+local UITheme = require("core.theme")
 local Overs = {}
 Overs.__index = Overs
 

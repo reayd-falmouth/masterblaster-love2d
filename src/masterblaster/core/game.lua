@@ -1,12 +1,12 @@
 -- game.lua
-local UITheme = require("theme")  -- Import shared colors
-local Spawns = require("spawns")
+local UITheme = require("core.theme")  -- Import shared colors
+local Spawns = require("core.spawns")
 local windfield = require ("lib.windfield")
-local Map = require("map")
-local Player = require "player"
-local Assets = require("assets")  -- Centralized assets module
-local Block = require("block")
-local Audio = require("audio")
+local Map = require("core.map")
+local Player = require "entities.player"
+local Assets = require("core.assets")  -- Centralized assets module
+local Block = require("entities.block")
+local Audio = require("system.audio")
 
 Game = {}
 
@@ -151,7 +151,7 @@ function Game.exitToMenu()
     alarmTriggered = false
     alarmSound:stop()
     Game.reset()  -- Ensure everything is reset before returning to the menu
-    switchState(require("menu")) -- Return to menu
+    switchState(require("scenes.menu")) -- Return to menu
 end
 
 function Game.exitToStandings()
@@ -161,7 +161,7 @@ function Game.exitToStandings()
     alarmSound:stop()
     Game.reset()  -- Ensure everything is reset before returning to the standings
 
-    local standings = require("standings")
+    local standings = require("scenes.standings")
     standings.load(playerResults) -- Pass player standings
     switchState(standings) -- Transition to standings screen
 end

@@ -1,5 +1,5 @@
 -- Title.lua
-require("globals")
+require("config.globals")
 local Title = {}
 local titleImage
 
@@ -19,7 +19,7 @@ end
 
 function Title:keypressed(key)
     -- Switch state to credits.lua when any key is pressed
-        switchState(require("credits"))
+        switchState(require("scenes.credits"))
 end
 
 return Title

@@ -1,8 +1,8 @@
 -- player.lua
-local Assets = require("assets")  -- global asset reference
-local Audio = require("audio")
-local Bomb = require("bomb")
-local Shaders = require("shaders")
+local Assets = require("core.assets")  -- global asset reference
+local Audio = require("system.audio")
+local Bomb = require("entities.bomb")
+local Shaders = require("system.shaders")
 
 local Player = {}
 Player.__index = Player

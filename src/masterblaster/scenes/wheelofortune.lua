@@ -1,4 +1,4 @@
-require("globals")
+require("config.globals")
 
 wheelOfFortune = {}
 

@@ -1,4 +1,4 @@
-local Assets = require("assets")
+local Assets = require("core.assets")
 local Fireball = {}
 Fireball.__index = Fireball
 
