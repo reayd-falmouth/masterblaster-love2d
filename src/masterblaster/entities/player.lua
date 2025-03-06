@@ -32,6 +32,7 @@ end
 
 function Player:applyItemEffect(item)
     log.debug("Applying item " .. item.key .. " to player")
+
     if item.key == "bomb" then
         self.bombs = self.bombs + 1
     elseif item.key == "powerUp" then
@@ -52,6 +53,7 @@ function Player:applyItemEffect(item)
         self.timebomb = true
     elseif item.key == "stopped" then
         self.stopped = true
+        self.stoppedTimer = item.duration
     elseif item.key == "coin" then
         self.money = self.money + 1  -- Change value as needed.
         self.stats.money = self.stats.money + 1
@@ -200,6 +202,15 @@ function Player:update(dt)
         end
     end
 
+    -- Update the stopped timer if active.
+    if self.stoppedTimer then
+        self.stoppedTimer = self.stoppedTimer - dt
+        if self.stoppedTimer <= 0 then
+            self.stopped = false
+            self.stoppedTimer = nil
+        end
+    end
+
     -- If we've already flagged for removal, skip updates entirely
     if self.toRemove then return end
 
@@ -222,9 +233,6 @@ function Player:update(dt)
         end
         return
     end
-
-    -- If the player is "stopped" for other reasons, skip movement
-    if self.stopped then return end
 
     -- Only do movement if collider exists
     if self.collider then
@@ -249,6 +257,11 @@ function Player:update(dt)
             vx = vx + self.speed
             self.currentAnimation = self.animations.moveRight
             moving = true
+        end
+
+        -- If the player is stopped, override any velocity to 0
+        if self.stopped then
+            vx, vy = 0, 0
         end
 
         -- Apply velocity
