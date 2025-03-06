@@ -56,19 +56,12 @@ function Player:applyItemEffect(item)
         self.money = self.money + 1  -- Change value as needed.
         self.stats.money = self.stats.money + 1
     elseif item.key == "controller" then
-        self.controller = true
-        self.timebomb = true
+        self.remote = true
     end
 end
 
 function Player:keypressed(key)
     if key == "space" then
-        if self.controller then
-            -- Enable remote mode and change to the controller (remote) animation.
-            self.remote = true
-            self:setAnimation("controller")
-        end
-        -- Drop the bomb (this will create a bomb or activate remote bomb logic based on self.remote)
         self:dropBomb()
     end
 end
@@ -115,6 +108,8 @@ end
 function Player:setAnimation(animName)
     if self.animations[animName] then
         self.currentAnimation = self.animations[animName]
+        self.currentFrame = 1
+        self.animationTimer = 0
     else
         print("Animation " .. animName .. " not found.")
     end
@@ -152,17 +147,17 @@ function Player:new(playerIndex)
 
     -- Animations table
     self.animations = {
-        moveDown   = Assets.generateAnimation(1, 3,  self.baseYOffset, ROW_FRAME_COUNT,
+        moveDown  = Assets.generateAnimation(1, 3,  self.baseYOffset, ROW_FRAME_COUNT,
                                              SPRITE_WIDTH, SPRITE_HEIGHT, GAP, spriteSheet),
-        moveRight  = Assets.generateAnimation(4, 6,  self.baseYOffset, ROW_FRAME_COUNT,
+        moveRight = Assets.generateAnimation(4, 6,  self.baseYOffset, ROW_FRAME_COUNT,
                                              SPRITE_WIDTH, SPRITE_HEIGHT, GAP, spriteSheet),
-        moveLeft   = Assets.generateAnimation(7, 9,  self.baseYOffset, ROW_FRAME_COUNT,
+        moveLeft  = Assets.generateAnimation(7, 9,  self.baseYOffset, ROW_FRAME_COUNT,
                                              SPRITE_WIDTH, SPRITE_HEIGHT, GAP, spriteSheet),
-        moveUp     = Assets.generateAnimation(10,12, self.baseYOffset, ROW_FRAME_COUNT,
+        moveUp    = Assets.generateAnimation(10,12, self.baseYOffset, ROW_FRAME_COUNT,
                                              SPRITE_WIDTH, SPRITE_HEIGHT, GAP, spriteSheet),
-        die        = Assets.generateAnimation(13,21, self.baseYOffset, ROW_FRAME_COUNT,
+        die       = Assets.generateAnimation(13,21, self.baseYOffset, ROW_FRAME_COUNT,
                                              SPRITE_WIDTH, SPRITE_HEIGHT, GAP, spriteSheet),
-        controller = Assets.generateAnimation(22,24, self.baseYOffset, ROW_FRAME_COUNT,
+        remote    = Assets.generateAnimation(22,24, self.baseYOffset, ROW_FRAME_COUNT,
                                              SPRITE_WIDTH, SPRITE_HEIGHT, GAP, spriteSheet)
     }
 
@@ -186,7 +181,7 @@ function Player:new(playerIndex)
     self.timebomb = false -- changes so that the user only drops a single bomb, which is ignited upon releasing the spacebar
     self.stopped = false -- temporarily causes the players movement to halt
     self.money = 0 + (self.stats.money or 0) -- how much money (coins)  they have. this carries over matches.
-    self.controller = false -- allows the user to move bombs with the cursors, so when space is pressed movement is transffered to the bomb, player is stopped
+    self.remote = false -- allows the user to move bombs with the cursors, so when space is pressed movement is transffered to the bomb, player is stopped
 
     -- Physics collider
     self.collider = Game.world:newCircleCollider(
@@ -255,27 +250,24 @@ function Player:update(dt)
         local vx, vy = 0, 0
         local moving = false
 
-        -- If not in remote mode, check movement keys for player movement.
-        if not self.remote then
-            if love.keyboard.isDown("up") then
-                vy = vy - self.speed
-                self.currentAnimation = self.animations.moveUp
-                moving = true
-            elseif love.keyboard.isDown("down") then
-                vy = vy + self.speed
-                self.currentAnimation = self.animations.moveDown
-                moving = true
-            end
+        if love.keyboard.isDown("up") then
+            vy = vy - self.speed
+            self.currentAnimation = self.animations.moveUp
+            moving = true
+        elseif love.keyboard.isDown("down") then
+            vy = vy + self.speed
+            self.currentAnimation = self.animations.moveDown
+            moving = true
+        end
 
-            if love.keyboard.isDown("left") then
-                vx = vx - self.speed
-                self.currentAnimation = self.animations.moveLeft
-                moving = true
-            elseif love.keyboard.isDown("right") then
-                vx = vx + self.speed
-                self.currentAnimation = self.animations.moveRight
-                moving = true
-            end
+        if love.keyboard.isDown("left") then
+            vx = vx - self.speed
+            self.currentAnimation = self.animations.moveLeft
+            moving = true
+        elseif love.keyboard.isDown("right") then
+            vx = vx + self.speed
+            self.currentAnimation = self.animations.moveRight
+            moving = true
         end
 
         -- If the player is stopped, override any velocity to 0
@@ -283,14 +275,16 @@ function Player:update(dt)
             vx, vy = 0, 0
         end
 
+        -- Apply velocity
         self.collider:setLinearVelocity(vx, vy)
 
+        -- Update logical (x, y) from collider’s position
         local cx, cy = self.collider:getPosition()
         self.x = cx
         self.y = cy + COLLIDER_RADIUS
 
-        -- Animate if moving OR if in remote mode (controller active)
-        if moving or self.remote then
+        -- Advance animation if moving
+        if moving then
             self.animationTimer = self.animationTimer + dt
             if self.animationTimer >= self.frameDuration then
                 self.animationTimer = self.animationTimer - self.frameDuration

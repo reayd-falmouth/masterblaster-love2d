@@ -111,12 +111,12 @@ Assets.ITEM_DEFINITIONS = {
     shopItem = false
   },
   {
-    enabled = true,
+    enabled = false,
     key = "controller",
     name = "CONTROLLER",
     cost = 4,
     row = 3, col = 13,
-    weight = 70,
+    weight = 5,
     shopItem = true
   },
   {
