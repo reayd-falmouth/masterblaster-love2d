@@ -12,6 +12,43 @@ local Audio = {
     sfxSources   = {}
 }
 
+function Audio.generateClickSound()
+    local sampleRate = 44100       -- Samples per second
+    local duration = 0.05          -- 50 milliseconds click
+    local numSamples = duration * sampleRate
+    local soundData = love.sound.newSoundData(numSamples, sampleRate, 16, 1)
+
+    for i = 0, numSamples - 1 do
+        local t = i / sampleRate
+        -- Generate a decaying sine wave at 2000 Hz.
+        local amplitude = math.exp(-t * 50) -- Adjust the decay rate as needed
+        local sample = amplitude * math.sin(2 * math.pi * 2000 * t)
+        soundData:setSample(i, sample)
+    end
+
+    return love.audio.newSource(soundData)
+end
+
+function Audio.generateBuzzSound()
+    local sampleRate = 44100       -- Samples per second
+    local duration = 0.1           -- Duration in seconds (adjust as needed)
+    local numSamples = duration * sampleRate
+    local soundData = love.sound.newSoundData(numSamples, sampleRate, 16, 1)
+    local frequency = 1500         -- Frequency in Hz for the buzz (adjust as desired)
+
+    for i = 0, numSamples - 1 do
+        local t = i / sampleRate
+        -- Exponential decay envelope
+        local amplitude = math.exp(-t * 30)   -- Increase multiplier for a faster decay
+        -- Generate a square wave: if sine is >= 0 then 1, else -1
+        local sampleValue = amplitude * (math.sin(2 * math.pi * frequency * t) >= 0 and 1 or -1)
+        soundData:setSample(i, sampleValue)
+    end
+
+    return love.audio.newSource(soundData)
+end
+
+
 function Audio.load()
     -- MUSIC (streamed)
     Audio.musicSources.arena = love.audio.newSource("assets/sounds/music.ogg", "stream")
@@ -27,6 +64,7 @@ function Audio.load()
     Audio.sfxSources.explode = love.audio.newSource("assets/sounds/explode.ogg", "static")
     Audio.sfxSources.go      = love.audio.newSource("assets/sounds/go.ogg", "static")
     Audio.sfxSources.warp    = love.audio.newSource("assets/sounds/warp.ogg", "static")
+    Audio.sfxSources.click   = love.audio.newSource("assets/sounds/burp.ogg", "static")
 
     -- Set initial volumes and (optionally) looping for music
     for _, track in pairs(Audio.musicSources) do

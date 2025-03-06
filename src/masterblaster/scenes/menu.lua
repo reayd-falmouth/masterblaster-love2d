@@ -4,6 +4,7 @@ local Font = require("system.fonts")
 local UITheme = require("core.theme")  -- Import shared colors
 local Game = require("core.game")
 local Shop = require("scenes.shop")
+local WheelOFortune = require("scenes.wof")
 
 -- A list of menu items that can be navigated and toggled
 local menuItems = {

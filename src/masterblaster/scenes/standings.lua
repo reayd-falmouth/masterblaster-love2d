@@ -6,6 +6,7 @@ local PlayerStats = require("core.stats")  -- persistent stats module
 local GameOver = require("scenes.overs")
 local UITheme = require("core.theme")
 local Shop = require("scenes.shop")
+local WheelOFortune = require("scenes.wof")
 
 local Standings = {}
 Standings.__index = Standings
@@ -61,9 +62,11 @@ function Standings.update(dt)
         if tournamentWon then
             switchState(GameOver)
         elseif GameSettings.shop == "ON" then
-            print("Moving to shop")
-            Shop.init()  -- Updated from Shop.load() to Shop.init()
-            switchState(Shop)
+            if GameSettings.gambling == "ON" then
+                switchState(WheelOFortune)
+            else
+                switchState(Shop)
+            end
         else
             switchState(Game)
         end
@@ -108,3 +111,4 @@ function Standings.draw()
 end
 
 return Standings
+
