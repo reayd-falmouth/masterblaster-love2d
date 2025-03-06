@@ -5,7 +5,7 @@ local titleImage
 
 function Title:load()
     -- Load the Title screen graphic
-    titleImage = love.graphics.newImage("assets/images/title.png")
+    titleImage = love.graphics.newImage("assets/images/cover.png")
 end
 
 function Title:update(dt)

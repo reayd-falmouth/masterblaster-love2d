@@ -1,5 +1,4 @@
 -- game.lua
-local GameSettings = require("settings")
 local UITheme = require("theme")  -- Import shared colors
 local Spawns = require("spawns")
 local windfield = require ("lib.windfield")
@@ -99,52 +98,6 @@ local function dumpObjectInfo(obj)
     end
     print("=== End dump ===")
 end
-
---local function safeGetObject(collider)
---    if not collider then
---        print("safeGetObject: collider is nil")
---        return nil
---    end
---
---    if collider.getObject then
---        local obj = collider:getObject()
---        if obj then
---            return obj
---        end
---    end
---
---    if collider.getUserData then
---        local ud = collider:getUserData()
---        if not ud then
---            print("safeGetObject: collider returned nil via getUserData")
---        end
---        return ud
---    end
---
---    print("safeGetObject: collider has neither getObject nor getUserData")
---    return nil
---end
---
---
---
---
---local function beginContact(a, b, coll)
---    local objA = safeGetObject(a)
---    local objB = safeGetObject(b)
---
---    if not objA or not objB then
---        return
---    end
---
---    if a:getCollisionClass() == "Player" and b:getCollisionClass() == "Item" then
---        objA:applyItemEffect(objB)
---        objB:removeItem()
---    elseif a:getCollisionClass() == "Item" and b:getCollisionClass() == "Player" then
---        objB:applyItemEffect(objA)
---        objA:removeItem()
---    end
---end
-
 
 local function endContact(a, b, coll)
     -- Optional: Code to run when two colliders separate.
@@ -260,18 +213,19 @@ function Game.reset()
 
     -- Register your collision classes
     Game.world:addCollisionClass('Player', { enters = {'Fireball'} })
-    Game.world:addCollisionClass('Block', { enters = {'Fireball'} })
     Game.world:addCollisionClass('Fireball', { enters = {'Block', 'Item'} })
+    Game.world:addCollisionClass('Block', { enters = {'Fireball'} })
     Game.world:addCollisionClass('Bomb', { enters = {'Fireball'} })
-    Game.world:addCollisionClass('Item', { enters = {'Player', 'Fireball', 'PlayerInvincible'} })
     Game.world:addCollisionClass('PlayerInvincible', { ignores = {'Fireball'}})
+    Game.world:addCollisionClass('PlayerGhost', { ignores = {'Block'}})
+    Game.world:addCollisionClass('Item', { enters = {'Player', 'Fireball', 'PlayerInvincible', 'PlayerGhost'} })
     -- Register the collision callbacks with the physics world.
 
     -- Reset other game state variables:
     countdown = 3
     countdownTimer = 1
     gameStarted = false
-    gameTime = 60
+    gameTime = 600
     alarmThreshold = gameTime / 3
     alarmTriggered = false
     playerResults = {}
@@ -330,13 +284,13 @@ function Game.update(dt)
         end
 
         -- 1) Update players
-        for i = #Game.players, 1, -1 do
-            local p = Game.players[i]
-            p:update(dt)
-            if p.toRemove then
-                table.remove(Game.players, i)
-            end
-        end
+        --for i = #Game.players, 1, -1 do
+        --    local p = Game.players[i]
+        --    p:update(dt)
+        --    if p.toRemove then
+        --        table.remove(Game.players, i)
+        --    end
+        --end
 
         -- 2) Update bombs
         if Game.bombs then
@@ -385,6 +339,40 @@ function Game.update(dt)
                     table.remove(Game.items, i)
                 end
             end
+        end
+
+        -- Existing player, bomb, fireball, and block update loops...
+        for i = #Game.players, 1, -1 do
+            local p = Game.players[i]
+            p:update(dt)
+            if p.toRemove then
+                table.remove(Game.players, i)
+            end
+        end
+
+        -- 3-second survival check for win condition:
+        local activePlayers = {}
+        for i, p in ipairs(Game.players) do
+            if not p.toRemove then
+                table.insert(activePlayers, p)
+            end
+        end
+
+        if #activePlayers <= 1 then
+            if not Game.winTimer then
+                Game.winTimer = 0
+            end
+            Game.winTimer = Game.winTimer + dt
+
+            if Game.winTimer >= 3 then
+                if #activePlayers == 1 then
+                    local winner = activePlayers[1]
+                    PlayerStats.addWin(winner.index)
+                end
+                Game.exitToStandings()
+            end
+        else
+            Game.winTimer = nil
         end
 
     else
@@ -482,6 +470,5 @@ function Game.draw()
         end
     end
 end
-
 
 return Game

@@ -15,17 +15,16 @@ local COLLIDER_RADIUS = 2.5
 local ITEM_DEFINITIONS = {
   { name = "bomb",        row = 2, col = 20, weight = 10 },
   { name = "power",       row = 3, col = 1,  weight = 10 },
-  { name = "superman",    row = 3, col = 2,  weight = 3 },
-  { name = "yingyang",    row = 3, col = 4,  weight = 50, duration = 15 }, -- 5 seconds duration
-  { name = "phase",       row = 3, col = 5,  weight = 5,  duration = 15 },
-  { name = "ghost",       row = 3, col = 6,  weight = 4,  duration = 15 },
+  --{ name = "superman",    row = 3, col = 2,  weight = 3 },
+  --{ name = "shield",    row = 3, col = 4,  weight = 5 },
+  --{ name = "ghost",       row = 3, col = 5,  weight = 50,  duration = 10 },
   { name = "speed",       row = 3, col = 7,  weight = 10 },
-  { name = "death",       row = 3, col = 8,  weight = 5 },
-  { name = "special",     row = 3, col = 9, weight = 2 },
-  { name = "fastIgnition",row = 3, col = 10,  weight = 3 },
-  { name = "stopped",     row = 3, col = 11,  weight = 2 },
+  --{ name = "death",       row = 3, col = 8,  weight = 5 },
+  --{ name = "special",     row = 3, col = 9, weight = 2 },
+  --{ name = "fastIgnition",row = 3, col = 10,  weight = 3 },
+  --{ name = "stopped",     row = 3, col = 11,  weight = 2, duration = 10 },
   { name = "money",       row = 3, col = 12,  weight = 9 },
-  { name = "remote",      row = 3, col = 13, weight = 3 },
+  --{ name = "remote",      row = 3, col = 13, weight = 3 },
   -- This entry means that sometimes nothing is spawned.
   { name = "none", weight = 50 }
 }
@@ -34,6 +33,8 @@ local ITEM_DEFINITIONS = {
 local spriteSheet = Assets.objectSpriteSheet
 
 -- Load the explosion sound.
+local pickupSound = Audio.sfxSources.bingo22
+local ooLaLaSound = Audio.sfxSources.bingo
 local bubbleSound = Audio.sfxSources.bubble
 local cashSound = Audio.sfxSources.cash
 local goSound = Audio.sfxSources.go
@@ -56,10 +57,14 @@ local function playItemSound(name)
         cashSound:play()
     elseif name == "speed" then
         goSound:play()
-    elseif name == "bomb" or name == "power" or name == "superman" or name == "special" then
+    elseif name == "bomb" or name == "power" then
+        pickupSound:play()
+    elseif name == "superman" then
         bubbleSound:play()
-    elseif name == "yingyang" or name == "phase" or name == "ghost" then
+    elseif name == "ghost" then
         warpSound:play()
+    elseif name == "yingyang" then
+        ooLaLaSound:play()
     end
 end
 
@@ -142,10 +147,8 @@ function Item:update(dt)
 
     -- Check collision with Player or PlayerInvincible
     local collision_type = nil
-    if self.collider:enter("Player") then
+    if self.collider and self.collider:enter("Player") then
         collision_type = "Player"
-    elseif self.collider:enter("PlayerInvincible") then
-        collision_type = "PlayerInvincible"
     end
 
     if collision_type then

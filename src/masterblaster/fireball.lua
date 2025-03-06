@@ -32,7 +32,6 @@ function Fireball:new(x, y, delay)
     self.collider:setSensor(false)
     self.collider:setCollisionClass("Fireball")
     self.collider:setObject(self)  -- so getUserData() returns the Fireball
-    --self.collider:setUserData(self)
 
     return self
 end

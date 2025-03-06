@@ -31,7 +31,7 @@ local remoteUDAnimation = Assets.generateAnimation(15, 20, 2 * BOMB_FRAME_HEIGHT
 -- For movement, we'll use remoteLRAnimation.
 local movingAnimation = remoteLRAnimation
 
-local FRAME_DURATION = 0.3  -- Seconds per frame.
+local FRAME_DURATION = 0.1  -- Seconds per frame.
 
 -- Define a local cell size (should match your grid cell size)
 local tileSize = 16

@@ -20,65 +20,37 @@ local deathSound = Audio.sfxSources.die
 function Player:clearBuff(buffType)
     if buffType == "yingyang" then
         self.yingyang = false
-        -- Change collision class so fireball collisions are ignored.
-        self.collider:setCollisionClass("Player")
-    elseif buffType == "phase" then
-        self.phase = false
     elseif buffType == "ghost" then
         self.ghost = false
     end
     -- Add additional cases if you introduce more buff types
+    self.collider:setCollisionClass("Player")
 end
 
 function Player:applyItemEffect(item)
-
-    if item.duration then
-         print("[DEBUG] Applying item: " .. item.type)
-        -- If there's an active buff, clear its effect before applying the new one.
-        if self.currentBuff then
-            self:clearBuff(self.currentBuff)
-        end
-
-        -- Set the new buff and its timer.
-        self.currentBuff = item.type
-        self.buffTimer = item.duration  -- Duration should come from ITEM_DEFINITIONS
-
-        -- Apply the effect immediately.
-        if item.type == "yingyang" then
-            self.yingyang = true
-            -- Change collision class so fireball collisions are ignored.
-            self.collider:setCollisionClass("PlayerInvincible")
-        elseif item.type == "phase" then
-            self.phase = true
-        elseif item.type == "ghost" then
-            self.ghost = true
-        end
-    else
-        if item.type == "bomb" then
-            self.bombs = self.bombs + 1
-        elseif item.type == "power" then
-            self.power = self.power + 1
-        elseif item.type == "superman" then
-            self.superman = true
-        elseif item.type == "speed" then
-            self.speed = self.speed + 20  -- Or adjust accordingly.
-        elseif item.type == "fastIgnition" then
-            self.fastIgnition = true
-        elseif item.type == "stopped" then
-            self.stopped = true
-        elseif item.type == "money" then
-            self.money = self.money + 1  -- Change value as needed.
-        elseif item.type == "remote" then
-            self.remote = true
-        elseif item.type == "death" then
-            self:die()  -- Call your death method.
-        end
-    end
-end
-
-function Player:keypressed(key)
-    if key == "space" then
-        self:dropBomb()
+     -- Apply the effect immediately.
+    if item.type == "bomb" then
+        self.bombs = self.bombs + 1
+    elseif item.type == "power" then
+        self.power = self.power + 1
+    elseif item.type == "superman" then
+        self.superman = true
+    elseif item.type == "ghost" then
+        self.ghost = true
+    elseif item.type == "yingyang" then
+        self.yingyang = true
+    elseif item.type == "speed" then
+        self.speed = self.speed + 20  -- Or adjust accordingly.
+    elseif item.type == "fastIgnition" then
+        self.fastIgnition = true
+    elseif item.type == "stopped" then
+        self.stopped = true
+    elseif item.type == "money" then
+        self.money = self.money + 1  -- Change value as needed.
+    elseif item.type == "remote" then
+        self.remote = true
+    elseif item.type == "death" then
+        self:die()  -- Call your death method.
     end
 end
 
@@ -113,6 +85,7 @@ function Player:setAnimation(animName)
         self.currentAnimation = self.animations[animName]
         self.currentFrame = 1
         self.animationTimer = 0
+        print("Animation set to " .. animName)
     else
         print("Animation " .. animName .. " not found.")
     end
@@ -160,6 +133,8 @@ function Player:new(playerIndex)
         die       = Assets.generateAnimation(13,21, self.baseYOffset, ROW_FRAME_COUNT,
                                              SPRITE_WIDTH, SPRITE_HEIGHT, GAP, spriteSheet),
         remote    = Assets.generateAnimation(22,24, self.baseYOffset, ROW_FRAME_COUNT,
+                                             SPRITE_WIDTH, SPRITE_HEIGHT, GAP, spriteSheet),
+        ghost = Assets.generateAnimation(25,30, self.baseYOffset, ROW_FRAME_COUNT,
                                              SPRITE_WIDTH, SPRITE_HEIGHT, GAP, spriteSheet)
     }
 
@@ -177,9 +152,9 @@ function Player:new(playerIndex)
     self.power = 0 -- the additional blast distance of fireballs
     self.superman = false -- can push single blocks and bombs
     self.yingyang = false  -- protected against fireballs, sprite becomes solid white for limited time
-    self.phase = false  -- walk through walls, spirte becomes translucent, time limit
-    self.ghost = false  -- invisible and can walk through walls, special sprite animation
-    self.speed = 25 -- the speed the player moves at
+    self.ghost = false  -- walk through walls, spirte becomes translucent, time limit
+    self.ghost = false  -- ghost and can walk through walls, special sprite animation
+    self.speed = 30 -- the speed the player moves at
     self.fastIgnition = false -- changes so that the user only drops a single bomb, which is ignited upon releasing the spacebar
     self.stopped = false -- temporarily causes the players movement to halt
     self.money = 0 -- how much money (coins)  they have. this carries over matches.
@@ -204,88 +179,101 @@ function Player:new(playerIndex)
     return self
 end
 
-function Player:update(dt)
-    -- If a buff is active, update its timer.
+-- Helper method to check for an active buff
+function Player:isBuffActive(buffName)
+    return self.currentBuff == buffName and self.buffTimer and self.buffTimer > 0
+end
+
+-- Private helper functions:
+local function updateBuff(self, dt)
     if self.buffTimer then
         self.buffTimer = self.buffTimer - dt
         if self.buffTimer <= 0 then
             self:clearBuff(self.currentBuff)
-            self.currentBuff = nil
-            self.buffTimer = nil
         end
     end
+end
 
-    -- If we've already flagged for removal, skip updates entirely
-    if self.toRemove then return end
+local function updateDeath(self, dt)
+    self.animationTimer = self.animationTimer + dt
+    if self.animationTimer >= self.frameDuration then
+        self.animationTimer = self.animationTimer - self.frameDuration
+        self.currentFrame = self.currentFrame + 1
+        if self.currentFrame > #self.animations.die then
+            self.toRemove = true
+        end
+    end
+end
 
-    -- Check collision with a Fireball if collider still exists
-    if self.collider and self.collider:enter("Fireball") and not self.yingyang then
-        self:die()  -- Switch to death logic
+local function updateMovement(self, dt)
+    local vx, vy = 0, 0
+    self.moving = false
+
+    if love.keyboard.isDown("up") then
+        vy = vy - self.speed
+        self.currentAnimation = self.animations.moveUp
+        self.moving = true
+    elseif love.keyboard.isDown("down") then
+        vy = vy + self.speed
+        self.currentAnimation = self.animations.moveDown
+        self.moving = true
     end
 
-    -- If the player is dead, just run the death animation
-    if self.isDead then
+    if love.keyboard.isDown("left") then
+        vx = vx - self.speed
+        self.currentAnimation = self.animations.moveLeft
+        self.moving = true
+    elseif love.keyboard.isDown("right") then
+        vx = vx + self.speed
+        self.currentAnimation = self.animations.moveRight
+        self.moving = true
+    end
+
+    self.collider:setLinearVelocity(vx, vy)
+    local cx, cy = self.collider:getPosition()
+    self.x = cx
+    self.y = cy + COLLIDER_RADIUS
+end
+
+local function updateAnimation(self, dt)
+    if self.moving then
         self.animationTimer = self.animationTimer + dt
         if self.animationTimer >= self.frameDuration then
             self.animationTimer = self.animationTimer - self.frameDuration
-            self.currentFrame = self.currentFrame + 1
-
-            -- If the death animation finishes, mark the player for removal
-            if self.currentFrame > #self.animations.die then
-                self.toRemove = true
-            end
+            self.currentFrame = (self.currentFrame % #self.currentAnimation) + 1
         end
+    else
+        self.currentFrame = 1
+        self.animationTimer = 0
+    end
+end
+
+function Player:keypressed(key)
+    if key == "space" then
+        self:dropBomb()
+    end
+end
+
+-- Public method: update
+function Player:update(dt)
+    if self.toRemove then return end
+
+        -- Check collision with a Fireball if collider still exists
+    if self.collider and self.collider:enter("Fireball") then
+        self:die()  -- Switch to death logic
+    end
+
+    updateBuff(self, dt)
+
+    if self.isDead then
+        updateDeath(self, dt)
         return
     end
 
-    -- If the player is "stopped" for other reasons, skip movement
     if self.stopped then return end
 
-    -- Only do movement if collider exists
-    if self.collider then
-        local vx, vy = 0, 0
-        local moving = false
-
-        if love.keyboard.isDown("up") then
-            vy = vy - self.speed
-            self.currentAnimation = self.animations.moveUp
-            moving = true
-        elseif love.keyboard.isDown("down") then
-            vy = vy + self.speed
-            self.currentAnimation = self.animations.moveDown
-            moving = true
-        end
-
-        if love.keyboard.isDown("left") then
-            vx = vx - self.speed
-            self.currentAnimation = self.animations.moveLeft
-            moving = true
-        elseif love.keyboard.isDown("right") then
-            vx = vx + self.speed
-            self.currentAnimation = self.animations.moveRight
-            moving = true
-        end
-
-        -- Apply velocity
-        self.collider:setLinearVelocity(vx, vy)
-
-        -- Update logical (x, y) from collider’s position
-        local cx, cy = self.collider:getPosition()
-        self.x = cx
-        self.y = cy + COLLIDER_RADIUS
-
-        -- Advance animation if moving
-        if moving then
-            self.animationTimer = self.animationTimer + dt
-            if self.animationTimer >= self.frameDuration then
-                self.animationTimer = self.animationTimer - self.frameDuration
-                self.currentFrame = (self.currentFrame % #self.currentAnimation) + 1
-            end
-        else
-            self.currentFrame = 1
-            self.animationTimer = 0
-        end
-    end
+    updateMovement(self, dt)
+    updateAnimation(self, dt)
 end
 
 function Player:draw(offsetX, offsetY)
