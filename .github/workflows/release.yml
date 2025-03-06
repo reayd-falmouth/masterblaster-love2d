@@ -59,7 +59,7 @@ jobs:
 
       - name: Build Windows Executable
         if: runner.os == 'Linux'
-        run: bash src/scripts/build_windows.sh 11.5 win64
+        run: bash .github/scripts/build_windows.sh 11.5 win64
 
       - name: Upload Windows Artifact
         if: runner.os == 'Linux'
