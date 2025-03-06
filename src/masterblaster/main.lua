@@ -6,6 +6,15 @@ local currentState = Title
 GameSettings = require("config.settings")
 PlayerStats = require("core.stats")
 
+-- Define players with unique control mappings
+KeyMaps = {
+    { name = "Player 1", keys = { up = "up", down = "down", left = "left", right = "right", bomb = "space" } },
+    { name = "Player 2", keys = { up = "w", down = "s", left = "a", right = "d", bomb = "lctrl" } },
+    { name = "Player 3", keys = { up = "i", down = "k", left = "j", right = "l", bomb = "rctrl" } },
+    { name = "Player 4", keys = { up = "t", down = "g", left = "f", right = "h", bomb = "lshift" } },
+    { name = "Player 5", keys = { up = "y", down = "h", left = "g", right = "j", bomb = "rshift" } },
+}
+
 -- These variables will be computed on window resize
 local scale, offsetX, offsetY = 1, 0, 0
 

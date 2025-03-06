@@ -69,7 +69,7 @@ local function spawnPlayers()
 
     Game.players = {}
     for i = 1, numPlayers do
-        local p = Player:new(i)
+        local p = Player:new(i, KeyMaps[i].keys)
         p.x = spawnPositions[i].x
         p.y = spawnPositions[i].y
         p.collider:setPosition(p.x, p.y)

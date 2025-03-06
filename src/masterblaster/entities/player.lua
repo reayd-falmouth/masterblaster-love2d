@@ -56,14 +56,14 @@ function Player:applyItemEffect(item)
 end
 
 function Player:keypressed(key)
-    if key == "space" then
+    if self.keyMap and key == self.keyMap.bomb then
         self:dropBomb()
     end
 end
 
 function Player:keyreleased(key)
     log.debug("Player:keyreleased received: " .. key)
-    if key == "space" and self.timebomb then
+    if self.keyMap and key == self.keyMap.bomb and self.timebomb then
         for _, bomb in ipairs(Game.bombs) do
             if bomb.owner == self and bomb.waiting then
                 bomb.waiting = false
@@ -120,9 +120,10 @@ function Player:die()
     end
 end
 
-function Player:new(playerIndex)
+function Player:new(playerIndex, keyMap)
     local self = setmetatable({}, Player)
     self.index = playerIndex or 1
+    self.keyMap = keyMap
     self.stats = PlayerStats.players[self.index]
 
     -- Calculate vertical offset for this player's row in the sheet.
@@ -178,7 +179,6 @@ function Player:new(playerIndex)
     self.collider:setObject(self)
     self.collider:setFriction(0)
     self.collider:setCollisionClass('Player')
-    --self.collider:setUserData(self)
 
     -- Death / removal flags
     self.isDead = false
@@ -260,21 +260,41 @@ function Player:update(dt)
         local vx, vy = 0, 0
         local moving = false
 
-        if love.keyboard.isDown("up") then
+        --if love.keyboard.isDown("up") then
+        --    vy = vy - self.speed
+        --    self.currentAnimation = self.animations.moveUp
+        --    moving = true
+        --elseif love.keyboard.isDown("down") then
+        --    vy = vy + self.speed
+        --    self.currentAnimation = self.animations.moveDown
+        --    moving = true
+        --end
+        --
+        --if love.keyboard.isDown("left") then
+        --    vx = vx - self.speed
+        --    self.currentAnimation = self.animations.moveLeft
+        --    moving = true
+        --elseif love.keyboard.isDown("right") then
+        --    vx = vx + self.speed
+        --    self.currentAnimation = self.animations.moveRight
+        --    moving = true
+        --end
+
+        if love.keyboard.isDown(self.keyMap.up) then
             vy = vy - self.speed
             self.currentAnimation = self.animations.moveUp
             moving = true
-        elseif love.keyboard.isDown("down") then
+        elseif love.keyboard.isDown(self.keyMap.down) then
             vy = vy + self.speed
             self.currentAnimation = self.animations.moveDown
             moving = true
         end
 
-        if love.keyboard.isDown("left") then
+        if love.keyboard.isDown(self.keyMap.left) then
             vx = vx - self.speed
             self.currentAnimation = self.animations.moveLeft
             moving = true
-        elseif love.keyboard.isDown("right") then
+        elseif love.keyboard.isDown(self.keyMap.right) then
             vx = vx + self.speed
             self.currentAnimation = self.animations.moveRight
             moving = true
