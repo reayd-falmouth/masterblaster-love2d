@@ -16,6 +16,13 @@ local COLLIDER_RADIUS = 7
 
 local deathSound = Audio.sfxSources.die
 
+-- inside your player.lua or Player class definition
+function Player:getGridPosition()
+    local row = math.floor(self.y / Game.map.tileSize) + 1
+    local col = math.floor(self.x / Game.map.tileSize) + 1
+    return row, col
+end
+
 -- Call this to start the 3-second countdown when hit during protection.
 function Player:activateProtectionTimer()
     self.protectionTimer = 3
@@ -29,7 +36,7 @@ function Player:applyItemEffect(item)
     if item.key == "bomb" then
         self.bombs = self.bombs + 1
     elseif item.key == "powerUp" then
-        self.power = self.power + 1
+        self.power = self.power + 2
     elseif item.key == "superman" then
         self.superman = true
     elseif item.key == "protection" then
@@ -39,7 +46,7 @@ function Player:applyItemEffect(item)
     elseif item.key == "ghost" then
         self.ghost = true
     elseif item.key == "speedUp" then
-        self.speed = self.speed + 20  -- Or adjust accordingly.
+        self.speed = self.speed + 40  -- Or adjust accordingly.
     elseif item.key == "death" then
         self:die()  -- Call your death method.
     elseif item.key == "timebomb" then

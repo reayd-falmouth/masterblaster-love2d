@@ -93,3 +93,7 @@ build-mac: love ## Build macOS .app bundle
 clean: ## Clean up build artifacts
 	@echo "Cleaning build directory..."
 	rm -rf $(BUILD_DIR)/*.love $(BUILD_DIR)/*.zip $(BUILD_DIR)/$(GAME_NAME)-windows $(BUILD_DIR)/$(GAME_NAME)-mac
+
+kill_zombies:
+	@echo "Killing zombie processess.."
+	@ps -ef | grep love | grep -v grep | awk '{print $2}' | xargs kill -9
