@@ -25,6 +25,7 @@ local createAnimation = Assets.generateAnimation(
 
 local FRAME_DURATION = 0.05
 
+
 function Block:new(row, col, tileSize, tileID, isDestructible, isShrinking)
     local self = setmetatable({}, Block)
 
@@ -43,6 +44,13 @@ function Block:new(row, col, tileSize, tileID, isDestructible, isShrinking)
     self.destroying = false
     self.toRemove = false
 
+    -- If the block is created during shrinking, use createAnimation
+    if self.isShrinking then
+        self.createAnimation = createAnimation
+        self.currentFrame = 1
+        self.animationTimer = 0
+    end
+
     -- Calculate actual (x,y) based on row/col and store as instance variables.
     self.x = (col - 1) * tileSize
     self.y = (row - 1) * tileSize
@@ -58,30 +66,38 @@ function Block:new(row, col, tileSize, tileID, isDestructible, isShrinking)
 end
 
 function Block:update(dt)
-    -- Play destruction animation if active
     if self.destroying then
         self.animationTimer = self.animationTimer + dt
         if self.animationTimer >= self.frameDuration then
             self.animationTimer = self.animationTimer - self.frameDuration
             self.currentFrame = self.currentFrame + 1
 
-            -- Once the last frame is reached, mark this block for removal
             if self.currentFrame > #self.destructionAnimation then
                 self.toRemove = true
-
-                -- Remove from blockMap
-                if Game.blockMap[self.row] and Game.blockMap[self.row][self.col] == self then
-                    Game.blockMap[self.row][self.col] = nil
+                -- Remove from the map (make sure to only clear the block property)
+                if Game.map.tileMap[self.row] then
+                    Game.map.tileMap[self.row][self.col].block = nil
                 end
             end
         end
+    elseif self.isShrinking then
+        self.animationTimer = self.animationTimer + dt
+        if self.animationTimer >= self.frameDuration then
+            self.animationTimer = self.animationTimer - self.frameDuration
+            if self.currentFrame < #self.createAnimation then
+                self.currentFrame = self.currentFrame + 1
+            else
+                self.isShrinking = false
+                self.tileID = Game.map.tileIDs.WALL  -- or Game.map.tileIDs.WALL if that’s how you reference it
+            end
+        end
     end
+
 end
 
 function Block:draw(tileQuads)
     if self.toRemove then return end
 
-    -- Use stored coordinates for drawing
     local x = self.x
     local y = self.y
 
@@ -90,8 +106,14 @@ function Block:draw(tileQuads)
         if frameQuad then
             love.graphics.draw(spriteSheet, frameQuad, x, y)
         end
+    elseif self.isShrinking then
+        -- Draw the createAnimation if the block was created by shrinking
+        local frameQuad = self.createAnimation[self.currentFrame]
+        if frameQuad then
+            love.graphics.draw(spriteSheet, frameQuad, x, y)
+        end
     else
-        local quad = tileQuads[self.tileID]
+        local quad = Game.map.tileQuads[self.tileID]
         if quad then
             love.graphics.draw(spriteSheet, quad, x, y)
         end
@@ -110,7 +132,10 @@ function Block:destroyBlock()
         local newItem = Item:spawn(self.x, self.y)
         if newItem then
             log.debug("New item " .. newItem.key .. " spawned at " .. self.x .. ", " .. self.y)
-            table.insert(Game.items, newItem)
+            -- Instead of adding to a global list, find the cell for this block and assign the item.
+            if Game.map.tileMap[self.row] and Game.map.tileMap[self.row][self.col] then
+                Game.map.tileMap[self.row][self.col].item = newItem
+            end
         end
 
         -- Remove collider so the block no longer obstructs movement
@@ -121,7 +146,7 @@ function Block:destroyBlock()
 
         -- Clear the tile from the map data
         if Game.map.tileMap[self.row] then
-            Game.map.tileMap[self.row][self.col] = Game.map.tileIDs.EMPTY
+            Game.map.tileMap[self.row][self.col].block = nil
         end
     end
 end

@@ -1,5 +1,6 @@
 -- map.lua
 require("config.globals")
+local Assets = require("core.assets")
 local Audio = require("system.audio")
 local Block = require("entities.block")
 local shrinkSound = nil
@@ -21,6 +22,14 @@ map.tileIDs = {
 
 -- The arena map (2D table)
 map.tileMap = {}
+-- Set up shrinking timers inside the map
+map.shrinkTimer = 0
+map.shrinkDelay = 1/5  -- or whatever value you want
+map.tileQuads = {}  -- Initialize empty table
+map.tilesPerRow = 20  -- Number of tiles per row
+map.tilesPerCol = 3    -- Number of tiles per column
+map.tileQuads = Assets.loadTileQuads(map.tileSize, map.tilesPerRow, map.tilesPerCol)
+map.tileSheet = Assets.objectSpriteSheet
 
 -- Compute safe spawn zones based on current map dimensions.
 -- These zones ensure players won't be trapped at spawn.
@@ -60,36 +69,47 @@ end
 
 -- Generate the base arena map, then place destructible blocks.
 function map:generateMap()
-  local safeZones = self:getSafeZones()
+    log.debug("MAP CREATION START")
+    self.tileMap = {}  -- Ensure it's a fresh table
 
-  for r = 1, self.rows do
-    self.tileMap[r] = {}
-    for c = 1, self.cols do
-      if r == 1 or r == self.rows or c == 1 or c == self.cols then
-        self.tileMap[r][c] = self.tileIDs.WALL
-      elseif r % 2 == 1 and c % 2 == 1 then
-        self.tileMap[r][c] = self.tileIDs.WALL
-      else
-        self.tileMap[r][c] = self.tileIDs.EMPTY
-      end
+    log.debug("  Getting safe zones...")
+    local safeZones = self:getSafeZones()
+
+    log.debug("  Generating walls...")
+    for r = 1, self.rows do
+        self.tileMap[r] = {}
+        for c = 1, self.cols do
+            -- Each cell is now a table that can hold both a block and an item.
+            self.tileMap[r][c] = { block = nil, item = nil }
+
+            if r == 1 or r == self.rows or c == 1 or c == self.cols then
+                self.tileMap[r][c].block = Block:new(r, c, self.tileSize, self.tileIDs.WALL, false)
+            elseif r % 2 == 1 and c % 2 == 1 then
+                self.tileMap[r][c].block = Block:new(r, c, self.tileSize, self.tileIDs.WALL, false)
+            end
+        end
     end
-  end
 
-  -- Place destructible blocks, avoiding safe zones.
-  self:placeDestructibles(safeZones)
+    -- Place destructible blocks, avoiding safe zones.
+    log.debug("  Placing destructibles...")
+    self:placeDestructibles(safeZones)
+
+    log.debug("MAP CREATION COMPLETE")
 end
 
 -- Place destructible blocks randomly, skipping safe zones.
 function map:placeDestructibles(safeZones)
-  for r = 2, self.rows - 1 do
-    for c = 2, self.cols - 1 do
-      if self.tileMap[r][c] == self.tileIDs.EMPTY and not self:isTileInList(r, c, safeZones) then
-        if math.random() < self.density then
-          self.tileMap[r][c] = self.tileIDs.DESTRUCTIBLE
+    for r = 2, self.rows - 1 do
+        for c = 2, self.cols - 1 do
+            local cell = self.tileMap[r][c]
+            -- Only place a destructible block if there's no block already (and it isn’t in a safe zone).
+            if not cell.block and not self:isTileInList(r, c, safeZones) then
+                if math.random() < self.density then
+                    cell.block = Block:new(r, c, self.tileSize, self.tileIDs.DESTRUCTIBLE, true)
+                end
+            end
         end
-      end
     end
-  end
 end
 
 -- Utility: check if a tile (r, c) is in a list of positions.
@@ -111,10 +131,23 @@ end
 
 -- Check if the block at grid position (gx, gy) is free.
 function map:isBlockFree(gx, gy)
-  if self.tileMap[gy] and self.tileMap[gy][gx] then
-    return self.tileMap[gy][gx] == self.tileIDs.EMPTY
-  end
-  return false
+    local cell = self.tileMap[gy] and self.tileMap[gy][gx]
+    if cell then
+        return cell.block == nil
+    end
+    return false
+end
+
+function map:getBlockAt(x, y)
+    local col = math.floor(x / self.tileSize) + 1
+    local row = math.floor(y / self.tileSize) + 1
+    if self.tileMap[row] then
+         local cell = self.tileMap[row][col]
+         if cell then
+              return cell.block
+         end
+    end
+    return nil
 end
 
 -- Find the nearest free block (grid coordinates) if the desired block isn’t free.
@@ -194,10 +227,7 @@ function map:shrinkMapStep()
     end
 
     -- Set tile to WALL in tileMap
-    self.tileMap[r][c] = self.tileIDs.WALL
-
-    -- Add a new Block object to blockMap for collision
-    Game.blockMap[r][c] = Block:new(r, c, self.tileSize, self.tileIDs.WALL, false, true)
+    self.tileMap[r][c].block = Block:new(r, c, self.tileSize, self.tileIDs.WALL, false, true)
 
     -- Check for players at this position and kill if necessary
     for _, player in ipairs(Game.players) do
@@ -213,7 +243,6 @@ function map:shrinkMapStep()
     shrinkSound:play()
 end
 
-
 -- Get the offsets for the map
 function map:getDrawOffset()
     local screenWidth = VIRTUAL_WIDTH
@@ -223,6 +252,62 @@ function map:getDrawOffset()
     local offsetX = (screenWidth - arenaWidth) / 2
     local offsetY = (screenHeight - arenaHeight) / 2
     return offsetX, offsetY
+end
+
+function map:load()
+
+end
+
+function map:update(dt, alarmActive)
+    -- Go row-by-row, col-by-col
+    for row = 1, #self.tileMap do
+        for col = 1, #self.tileMap[row] do
+            local cell = self.tileMap[row][col]
+            if cell then
+                if cell.block then
+                    cell.block:update(dt)
+                    if cell.block.toRemove then
+                        cell.block = nil
+                    end
+                end
+                if cell.item then
+                    cell.item:update(dt)
+                    if cell.item.toRemove then
+                        cell.item = nil
+                    end
+                end
+            end
+        end
+    end
+
+    -- Only update shrinking if the settings are on and alarm has been triggered.
+    if GameSettings.shrinking and alarmActive then
+        log.debug("Alarm active, shrinking arena...")
+        self.shrinkTimer = self.shrinkTimer + dt
+        if self.shrinkTimer >= self.shrinkDelay then
+            self.shrinkTimer = 0
+            self:shrinkMapStep()
+        end
+    end
+end
+
+function map:draw()
+    for r = 1, self.rows do
+        for c = 1, self.cols do
+            local cell = self.tileMap[r][c]
+            -- Draw the floor tile first (if needed)
+            local x, y = (c - 1) * self.tileSize, (r - 1) * self.tileSize
+            love.graphics.draw(self.tileSheet, self.tileQuads[self.tileIDs.EMPTY], x, y)
+            -- Then draw the block (if it exists)
+            if cell.block then
+                cell.block:draw(Game.tileQuads)
+            end
+            -- Finally, draw the item on top (if present)
+            if cell.item then
+                cell.item:draw()
+            end
+        end
+    end
 end
 
 return map

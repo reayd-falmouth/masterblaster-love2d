@@ -182,7 +182,7 @@ function Bomb:explode()
             local tileY = self.y + dir.dy * i * tileSize
 
             -- Look up a block at (tileX, tileY)
-            local block = Game:getBlockAt(tileX, tileY)
+            local block = Game.map:getBlockAt(tileX, tileY)
             if block then
                 -- If block exists, check destructibility
                 if block.isDestructible then

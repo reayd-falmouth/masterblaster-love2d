@@ -1,7 +1,5 @@
 -- conf.lua
 require("config.globals")
-log = require("utils.logging")
-log.LOG_LEVEL = log.DEBUG
 
 function love.conf(t)
     t.window.title = "Master Blaster " .. VERSION

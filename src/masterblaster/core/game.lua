@@ -21,11 +21,6 @@ local alarmTriggered
 local tension = 0.002
 local playerResults = {} -- Store player standings
 
-local tileQuads = {}  -- Initialize empty table
-local tilesPerRow = 20  -- Number of tiles per row
-local tilesPerCol = 3    -- Number of tiles per column
-local shrinkTimer = 1 -- Timer to control shrinking speed
-local shrinkDelay = 1/6 -- Time (in seconds) between each shrink step
 local tileSize = 16  -- Tile size in pixels
 
 -- At the top, rename your constants table:
@@ -35,14 +30,6 @@ local tileSheet
 -- Helper function to load assets from the centralized assets module.
 local function loadAssets()
     tileSheet = Assets.objectSpriteSheet
-    tileQuads = Assets.loadTileQuads(tileSize, tilesPerRow, tilesPerCol)
-end
-
--- Helper function to generate and populate the game map.
-local function loadMap()
-    Game.map = Map -- Create a new empty tileMap
-    Game.map:generateMap()  -- Now automatically uses safe zones based on map dimensions.
-    -- If needed, you can also call map:placePowerUps(tileSheet) here.
 end
 
 -- Helper function to load audio assets.
@@ -64,9 +51,12 @@ end
 
 -- Helper function to spawn players
 local function spawnPlayers()
+    log.debug("SPAWNING PLAYERS")
     local numPlayers = GameSettings.players
+    log.debug("  Getting spawn positions...")
     local spawnPositions = Spawns:getSpawnPositions(numPlayers, Game.map)
 
+    log.debug("  Setting positions..")
     Game.players = {}
     for i = 1, numPlayers do
         local p = Player:new(i, KeyMaps[i].keys)
@@ -75,6 +65,8 @@ local function spawnPlayers()
         p.collider:setPosition(p.x, p.y)
         table.insert(Game.players, p)
     end
+
+    log.debug("SPAWNING COMPLETE")
 end
 
 local function dumpObjectInfo(obj)
@@ -155,7 +147,6 @@ function Game.keyreleased(key)
     end
 end
 
-
 function Game.exitToMenu()
     gameStarted = false
     gameMusic:stop()
@@ -177,34 +168,6 @@ function Game.exitToStandings()
     switchState(standings) -- Transition to standings screen
 end
 
--- During spawnBlocks, build Game.blockMap[row][col]:
-function Game.spawnBlocks()
-    Game.blockMap = {}                   -- 2D array for block objects
-    for row = 1, #Game.map.tileMap do
-        Game.blockMap[row] = {}
-        for col = 1, #Game.map.tileMap[row] do
-            local tile = Game.map.tileMap[row][col]
-            if tile ~= Game.map.tileIDs.EMPTY then
-                -- For both WALL and DESTRUCTIBLE tiles, create a block.
-                local isDestructible = (tile == Game.map.tileIDs.DESTRUCTIBLE)
-                local block = Block:new(row, col, tileSize, tile, isDestructible)
-                Game.blockMap[row][col] = block
-            else
-                Game.blockMap[row][col] = nil
-            end
-        end
-    end
-end
-
--- Now getBlockAt can return the actual block object:
-function Game:getBlockAt(x, y)
-    local col = math.floor(x / tileSize) + 1
-    local row = math.floor(y / tileSize) + 1
-    if Game.blockMap and Game.blockMap[row] then
-        return Game.blockMap[row][col]  -- The Block, or nil
-    end
-end
-
 -- Function to reset game state
 function Game.reset()
     -- Destroy existing colliders if you stored them in Game.colliders
@@ -214,6 +177,8 @@ function Game.reset()
         end
         Game.colliders = {}
     end
+
+    Game.map = Map
     Game.items = {}
     Game.bombs = {}
     Game.fireballs = {}
@@ -238,14 +203,14 @@ function Game.reset()
     countdown = 3
     countdownTimer = 1
     gameStarted = false
-    gameTime = GameSettings.shrinking == "ON" and 30 or 300
+    gameTime = GameSettings.shrinking == "ON" and 180 or 300
     alarmThreshold = gameTime / 3
     alarmTriggered = false
     playerResults = {}
 
     -- Rebuild map colliders and re-spawn players as needed
     Game.map:generateMap()
-    Game.spawnBlocks()
+
     spawnPlayers()
 end
 
@@ -254,7 +219,6 @@ function Game.load()
     -- Load assets, map, and audio
     loadAssets()
     loadAudio()
-    loadMap()
     -- Make sure to create/reset the world and add collision classes
     Game.reset()
 end
@@ -290,14 +254,7 @@ function Game.update(dt)
         local newPitch = gameMusic:getPitch() + (dt * tension)
         gameMusic:setPitch(math.min(newPitch, 2.0))
 
-        -- 1) Update players
-        --for i = #Game.players, 1, -1 do
-        --    local p = Game.players[i]
-        --    p:update(dt)
-        --    if p.toRemove then
-        --        table.remove(Game.players, i)
-        --    end
-        --end
+        Game.map:update(dt, alarmTriggered)
 
         -- 2) Update bombs
         if Game.bombs then
@@ -319,39 +276,6 @@ function Game.update(dt)
                 fb:update(dt)
                 if fb.timer <= 0 or fb.toRemove then
                     table.remove(Game.fireBalls, i)
-                end
-            end
-        end
-
-        -- CHANGED: 4) Update blocks directly from blockMap
-        -- Go row-by-row, col-by-col
-        for row = 1, #Game.blockMap do
-            for col = 1, #Game.blockMap[row] do
-                local block = Game.blockMap[row][col]
-                if block then
-                    block:update(dt)
-                    if block.toRemove then
-                        -- remove from blockMap
-                        Game.blockMap[row][col] = nil
-                    end
-                end
-            end
-        end
-
-        if alarmTriggered and GameSettings.shrinking then
-            shrinkTimer = shrinkTimer + dt
-            if shrinkTimer >= shrinkDelay then
-                shrinkTimer = 0
-                Game.map:shrinkMapStep()
-            end
-        end
-
-        if Game.items then
-            for i = #Game.items, 1, -1 do
-                local item = Game.items[i]
-                item:update(dt)
-                if item.toRemove then
-                    table.remove(Game.items, i)
                 end
             end
         end
@@ -433,33 +357,7 @@ function Game.draw()
             love.graphics.translate(offsetX, offsetY)
 
             -- 1) Draw tile map
-            for row = 1, #Game.map.tileMap do
-                for col = 1, #Game.map.tileMap[row] do
-                    local tile = Game.map.tileMap[row][col]
-                    if tileQuads[tile] then
-                        local worldX = (col - 1) * tileSize
-                        local worldY = (row - 1) * tileSize
-                        love.graphics.draw(tileSheet, tileQuads[tile], worldX, worldY)
-                    end
-                end
-            end
-
-            -- CHANGED: 2) Draw blocks from blockMap
-            for row = 1, #Game.blockMap do
-                for col = 1, #Game.blockMap[row] do
-                    local block = Game.blockMap[row][col]
-                    if block then
-                        block:draw(tileQuads)
-                    end
-                end
-            end
-
-            -- CHANGED: 3) Draw items from items
-            if Game.items then
-                for _, item in ipairs(Game.items) do
-                    item:draw()
-                end
-            end
+            Game.map:draw()
 
             -- 3) Draw bombs
             if Game.bombs then
@@ -483,6 +381,7 @@ function Game.draw()
             if DEBUG then
                 Game.world:draw()
             end
+
             love.graphics.pop()
         end
     end
