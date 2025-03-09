@@ -1,6 +1,7 @@
 local Assets = require("core.assets")
 local Audio = require("system.audio")
 local Fireball = require("entities.fireball")
+local Helpers = require("utils.helpers")
 local Bomb = {}
 Bomb.__index = Bomb
 
@@ -9,29 +10,13 @@ local BOMB_FRAME_WIDTH    = 16
 local BOMB_FRAME_HEIGHT   = 16
 local BOMB_FRAMES_PER_ROW = 20  -- Adjust to match your objects sprite sheet layout.
 local BOMB_GAP            = 0
-local COLLIDER_RADIUS = 7
+local COLLIDER_RADIUS = 7.5
 
 -- Use the objects sprite sheet for bomb animations.
 local spriteSheet = Assets.objectSpriteSheet
 
--- Define animations using the generic helper.
--- Idle animation: row 2, frames 15–17.
-local idleAnimation = Assets.generateAnimation(15, 17, BOMB_FRAME_HEIGHT, BOMB_FRAMES_PER_ROW, BOMB_FRAME_WIDTH, BOMB_FRAME_HEIGHT, BOMB_GAP, spriteSheet)
-
--- Remote left/right: two parts.
-local remoteLR_part1 = Assets.generateAnimation(19, 20, 0, BOMB_FRAMES_PER_ROW, BOMB_FRAME_WIDTH, BOMB_FRAME_HEIGHT, BOMB_GAP, spriteSheet)
-local remoteLR_part2 = Assets.generateAnimation(5, 8, BOMB_FRAME_HEIGHT, BOMB_FRAMES_PER_ROW, BOMB_FRAME_WIDTH, BOMB_FRAME_HEIGHT, BOMB_GAP, spriteSheet)
-local remoteLRAnimation = {}
-for _, quad in ipairs(remoteLR_part1) do table.insert(remoteLRAnimation, quad) end
-for _, quad in ipairs(remoteLR_part2) do table.insert(remoteLRAnimation, quad) end
-
--- Remote up/down: row 3, frames 15–20.
-local remoteUDAnimation = Assets.generateAnimation(15, 20, 2 * BOMB_FRAME_HEIGHT, BOMB_FRAMES_PER_ROW, BOMB_FRAME_WIDTH, BOMB_FRAME_HEIGHT, BOMB_GAP, spriteSheet)
-
--- For movement, we'll use remoteLRAnimation.
-local movingAnimation = remoteLRAnimation
-
 local FRAME_DURATION = 0.1  -- Seconds per frame.
+local MOVING_DURATION = 0.2
 
 -- Define a local cell size (should match your grid cell size)
 local tileSize = 16
@@ -46,7 +31,7 @@ local function spawnFireBall(x, y, delay)
     table.insert(Game.fireBalls, fb)
 end
 
-function Bomb:new(player)
+function Bomb:new(player, remoteControlled)
     local self = setmetatable({}, Bomb)
 
     -- Snap bomb to the center of the grid block.
@@ -60,26 +45,47 @@ function Bomb:new(player)
     self.timer = 3              -- Countdown until explosion.
     self.state = "idle"         -- "idle", "moving", "exploding"
     self.owner = player
+    self.speed = 40
     self.spriteSheet = spriteSheet
-    self.animation = idleAnimation
+
+    -- Animations table
+    self.animations = {
+        idleAnimation = Assets.generateAnimation(15, 17, BOMB_FRAME_HEIGHT, BOMB_FRAMES_PER_ROW, BOMB_FRAME_WIDTH, BOMB_FRAME_HEIGHT, BOMB_GAP, spriteSheet),
+        moveDown = Assets.generateAnimation(35, 38, BOMB_FRAME_HEIGHT, BOMB_FRAMES_PER_ROW, BOMB_FRAME_WIDTH, BOMB_FRAME_HEIGHT, BOMB_GAP, spriteSheet),
+        moveUp = Helpers.reverseTable(Assets.generateAnimation(35, 38, BOMB_FRAME_HEIGHT, BOMB_FRAMES_PER_ROW, BOMB_FRAME_WIDTH, BOMB_FRAME_HEIGHT, BOMB_GAP, spriteSheet)),
+        moveLeft = Helpers.reverseTable(Assets.generateAnimation(6, 9, BOMB_FRAME_HEIGHT, BOMB_FRAMES_PER_ROW, BOMB_FRAME_WIDTH, BOMB_FRAME_HEIGHT, BOMB_GAP, spriteSheet)),
+        moveRight = Assets.generateAnimation(6, 9, BOMB_FRAME_HEIGHT, BOMB_FRAMES_PER_ROW, BOMB_FRAME_WIDTH, BOMB_FRAME_HEIGHT, BOMB_GAP, spriteSheet)
+    }
+
+    self.currentAnimation = self.animations.idleAnimation
     self.currentFrame = 1
     self.frameDuration = FRAME_DURATION
     self.animationTimer = 0
     self.activationDelay = 1    -- Time in seconds before bomb collision becomes active.
     self.toRemove = false
+    self.remoteControlled = remoteControlled or false
+    self.remoteControlledSound = Audio.sfxSources.effect
 
     -- Create the collider as a circle centered on the bomb.
-    self.collider = Game.world:newCircleCollider(gridX, gridY, (COLLIDER_RADIUS / 2))
-    self.collider:setSensor(true)  -- Disable collision initially.
-    self.collider:setType("static")
+    self.collider = Game.world:newCircleCollider(gridX, gridY, COLLIDER_RADIUS)
+    self.collider:setSensor(false)  -- Disable collision initially.
+
+    if not self.remoteControlled then
+        log.info("Not remote controlled setting static collision")
+        self.collider:setType("static")
+    else
+        log.info("Remote controlled friction set to 0")
+        self.collider:setFriction(0)
+    end
     self.collider:setCollisionClass("Bomb")
     self.collider:setObject(self)
+
 
     -- Set waiting flag if player is in timebomb mode.
     if player.timebomb then
         self.waiting = true
         self.timer = 0
-        log.debug("Timebomb mode active: bomb waiting for key release")
+        log.info("Timebomb mode active: bomb waiting for key release")
     else
         self.waiting = false
     end
@@ -100,57 +106,92 @@ function Bomb:update(dt)
 
     -- Only count down the timer if not waiting for space release.
     if not self.waiting then
+        log.debug("Bomb counting down")
         self.timer = self.timer - dt
     end
 
     self.animationTimer = self.animationTimer + dt
     if self.animationTimer >= self.frameDuration then
         self.animationTimer = self.animationTimer - self.frameDuration
-        self.currentFrame = (self.currentFrame % #self.animation) + 1
+        self.currentFrame = (self.currentFrame % #self.currentAnimation) + 1
     end
 
-    -- Handle activation delay: after a short delay, enable collision.
-    if self.activationDelay > 0 then
-        self.activationDelay = self.activationDelay - dt
-        if self.activationDelay <= 0 then
-            self.collider:setSensor(false)
-        end
+    -- Handle collision until the player has moved away from the bomb
+    local dx = self.x - self.owner.x
+    local dy = self.y - self.owner.y
+    local separation = math.sqrt(dx * dx + dy * dy)
+    local safeDistance = self.owner.colliderRadius + COLLIDER_RADIUS + 2  -- add a small buffer
+
+    if separation > safeDistance then
+        -- Switch collision class so that collisions with the player are now enabled.
+        self.collider:setCollisionClass("Bomb")
+        -- (Make sure that "Bomb" collides with "Player" while "BombInactive" does not.)
+    else
+        -- Optionally, keep it in the inactive class
+        self.collider:setCollisionClass("BombInactive")
     end
 
     if self.timer <= 0 and self.state ~= "exploding" and not self.waiting then
         self:explode()
     end
 
-    if self.state == "idle" then
-        -- Allow bomb movement if the player has remote or superman attributes.
-        if self.owner.remote and love.keyboard.isDown("space") and self.owner:isStationary() then
-            self.state = "moving"
-            self.animation = remoteLRAnimation
-            if love.keyboard.isDown("up") then
-                self.y = self.y - tileSize
-            elseif love.keyboard.isDown("down") then
-                self.y = self.y + tileSize
-            elseif love.keyboard.isDown("left") then
-                self.x = self.x - tileSize
-            elseif love.keyboard.isDown("right") then
-                self.x = self.x + tileSize
+    if self.remoteControlled and self.state ~= "exploding" then
+        log.debug("Moving remote controlled bomb...")
+        local vx, vy = 0, 0
+        local moving = false
+
+        if love.keyboard.isDown(self.owner.keyMap.up) then
+            if self.currentAnimation ~= self.animations.moveUp then
+                self.currentAnimation = self.animations.moveUp
+                self.currentFrame = 1
+                self.animationTimer = 0
             end
-            self.collider:setPosition(self.x - tileSize/2, self.y - tileSize/2)
-        elseif self.owner.superman then
-            self.state = "moving"
-            self.animation = movingAnimation
-            if love.keyboard.isDown("up") then
-                self.y = self.y - tileSize
-            elseif love.keyboard.isDown("down") then
-                self.y = self.y + tileSize
-            elseif love.keyboard.isDown("left") then
-                self.x = self.x - tileSize
-            elseif love.keyboard.isDown("right") then
-                self.x = self.x + tileSize
+            vy = vy - self.speed
+            moving = true
+            self.remoteControlledSound:play()
+        elseif love.keyboard.isDown(self.owner.keyMap.down) then
+            if self.currentAnimation ~= self.animations.moveDown then
+                self.currentAnimation = self.animations.moveDown
+                self.currentFrame = 1
+                self.animationTimer = 0
             end
-            self.collider:setPosition(self.x - tileSize/2, self.y - tileSize/2)
+            vy = vy + self.speed
+            moving = true
+            self.remoteControlledSound:play()
+        elseif love.keyboard.isDown(self.owner.keyMap.left) then
+            if self.currentAnimation ~= self.animations.moveLeft then
+                self.currentAnimation = self.animations.moveLeft
+                self.currentFrame = 1
+                self.animationTimer = 0
+            end
+            vx = vx - self.speed
+            moving = true
+            self.remoteControlledSound:play()
+        elseif love.keyboard.isDown(self.owner.keyMap.right) then
+            if self.currentAnimation ~= self.animations.moveRight then
+                self.currentAnimation = self.animations.moveRight
+                self.currentFrame = 1
+                self.animationTimer = 0
+            end
+            vx = vx + self.speed
+            moving = true
+            self.remoteControlledSound:play()
+        else
+            if self.currentAnimation ~= self.animations.idleAnimation then
+                self.currentAnimation = self.animations.idleAnimation
+                self.currentFrame = 1
+                self.animationTimer = 0
+            end
         end
-        -- If neither remote nor superman, the bomb remains static.
+
+
+        -- Apply velocity
+        self.collider:setLinearVelocity(vx, vy)
+
+        -- Update logical (x, y) from collider’s position
+        local cx, cy = self.collider:getPosition()
+        self.x = cx
+        self.y = cy
     end
 end
 
@@ -203,7 +244,7 @@ end
 function Bomb:draw()
     love.graphics.draw(
         self.spriteSheet,
-        self.animation[self.currentFrame],
+        self.currentAnimation[self.currentFrame],
         self.x,
         self.y,
         0,        -- rotation
@@ -214,3 +255,4 @@ function Bomb:draw()
 end
 
 return Bomb
+

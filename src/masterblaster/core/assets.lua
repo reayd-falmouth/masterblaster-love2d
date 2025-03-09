@@ -111,12 +111,12 @@ Assets.ITEM_DEFINITIONS = {
     shopItem = false
   },
   {
-    enabled = false,
+    enabled = true,
     key = "controller",
     name = "CONTROLLER",
     cost = 4,
     row = 3, col = 13,
-    weight = 5,
+    weight = 70,
     shopItem = true
   },
   {
@@ -188,16 +188,18 @@ end
 -- Generic helper: Create a quad for a given frame with a base Y offset.
 -- Now the spriteSheet is passed in as a parameter.
 function Assets.getQuadWithOffset(frame, baseYOffset, rowFrameCount, spriteWidth, spriteHeight, gap, spriteSheet)
-    local x, y
-    if frame <= rowFrameCount then
-        x = (frame - 1) * spriteWidth
-        y = baseYOffset
-    else
-        x = (frame - rowFrameCount - 1) * spriteWidth
-        y = baseYOffset + spriteHeight + gap
-    end
+    -- Determine row and column based on the frame number
+    local row = math.ceil(frame / rowFrameCount) -- Row index (starting from 1)
+    local column = (frame - 1) % rowFrameCount   -- Column index (starting from 0)
+
+    -- Calculate x and y positions
+    local x = column * spriteWidth
+    local y = baseYOffset + (row - 1) * (spriteHeight + gap) -- Adjust y for multiple rows
+
+    -- Return the quad
     return love.graphics.newQuad(x, y, spriteWidth, spriteHeight, spriteSheet:getDimensions())
 end
+
 
 -- Generic helper: Generate an animation sequence from startFrame to endFrame.
 function Assets.generateAnimation(startFrame, endFrame, baseYOffset, rowFrameCount, spriteWidth, spriteHeight, gap, spriteSheet)

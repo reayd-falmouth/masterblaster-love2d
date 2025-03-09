@@ -1,6 +1,6 @@
 -- globals.lua
 log = require("utils.logging")
-log.LOG_LEVEL = log.DEBUG
+log.LOG_LEVEL = log.INFO
 
 VERSION = "v1.0"
 VIRTUAL_WIDTH = 640

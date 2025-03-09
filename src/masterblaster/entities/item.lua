@@ -5,7 +5,7 @@ local Item = {}
 Item.__index = Item
 
 local TILE_SIZE = 16
-local COLLIDER_RADIUS = 2.5
+local COLLIDER_RADIUS = 7.5
 
 -- Removed local ITEM_DEFINITIONS; using Assets.ITEM_DEFINITIONS instead.
 
@@ -28,6 +28,10 @@ local function playItemSound(key)
     elseif key == "superman" then
         bubbleSound:play()
     elseif key == "timebomb" then
+        bubbleSound:play()
+    elseif key == "controller" then
+        bubbleSound:play()
+    elseif key == "stopped" then
         bubbleSound:play()
     elseif key == "ghost" then
         warpSound:play()
