@@ -35,10 +35,12 @@ function Bomb:new(player, remoteControlled)
     local self = setmetatable({}, Bomb)
 
     -- Snap bomb to the center of the grid block.
-    local gridX = math.floor(player.x / tileSize) * tileSize + tileSize / 2
-    local gridY = math.floor(player.y / tileSize) * tileSize + tileSize / 2
+    local row, col = player:getGridPosition()
+    local gridX = (col - 1) * Game.map.tileSize + Game.map.tileSize / 2
+    local gridY = (row - 1) * Game.map.tileSize + Game.map.tileSize / 2
 
-    -- Default bomb power (if player.power is nil, default to 1)
+
+    -- Default bomb power (if player.power is nil, default to 2)
     self.x = gridX
     self.y = gridY
     self.power = player.power + 2
@@ -77,7 +79,7 @@ function Bomb:new(player, remoteControlled)
         log.info("Remote controlled friction set to 0")
         self.collider:setFriction(0)
     end
-    self.collider:setCollisionClass("Bomb")
+    self.collider:setCollisionClass("BombInactive")
     self.collider:setObject(self)
 
 
