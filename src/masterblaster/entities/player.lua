@@ -46,11 +46,12 @@ function Player:applyItemEffect(item)
     elseif item.key == "ghost" then
         self.ghost = true
     elseif item.key == "speedUp" then
-        self.speed = self.speed + 40  -- Or adjust accordingly.
+        self.speed = self.speed + 20  -- Or adjust accordingly.
     elseif item.key == "death" then
         self:die()  -- Call your death method.
     elseif item.key == "timebomb" then
         self.timebomb = true
+        self.remote = false
     elseif item.key == "stopped" then
         self.stopped = true
         self.stoppedTimer = item.duration
@@ -58,7 +59,9 @@ function Player:applyItemEffect(item)
         self.money = self.money + 1  -- Change value as needed.
         self.stats.money = self.stats.money + 1
     elseif item.key == "controller" then
+        log.debug("Remote controller active")
         self.remote = true
+        self.timebomb = true
     end
 end
 
@@ -78,6 +81,9 @@ function Player:keyreleased(key)
             end
         end
     end
+    if self.keyMap and key == self.keyMap.bomb and self.remote and self.stopped then
+        self.stopped = false
+    end
 end
 
 function Player:dropBomb()
@@ -93,14 +99,18 @@ function Player:dropBomb()
 
     -- Check if the player can drop more bombs
     if bombCount < self.bombs then
+        local bomb = nil
         if self.remote then
             log.debug("Remote bomb activated: use cursor keys to move the bomb.")
             -- Implement remote bomb logic if needed
-        else
-            local bomb = Bomb:new(self)
+            bomb = Bomb:new(self, true)
             table.insert(Game.bombs, bomb)
-            log.debug("Bomb dropped at (" .. bomb.x .. ", " .. bomb.y .. ")")
+            self.stopped = true
+        else
+            bomb = Bomb:new(self)
+            table.insert(Game.bombs, bomb)
         end
+        log.debug("Bomb dropped at (" .. bomb.x .. ", " .. bomb.y .. ")")
     else
         log.warning("You have reached your bomb limit!")
     end
@@ -158,7 +168,7 @@ function Player:new(playerIndex, keyMap)
     self.currentFrame = 1
     self.frameDuration = 0.1
     self.animationTimer = 0
-
+    self.colliderRadius = COLLIDER_RADIUS
     self.x = 100
     self.y = 100
 
@@ -267,26 +277,6 @@ function Player:update(dt)
         local vx, vy = 0, 0
         local moving = false
 
-        --if love.keyboard.isDown("up") then
-        --    vy = vy - self.speed
-        --    self.currentAnimation = self.animations.moveUp
-        --    moving = true
-        --elseif love.keyboard.isDown("down") then
-        --    vy = vy + self.speed
-        --    self.currentAnimation = self.animations.moveDown
-        --    moving = true
-        --end
-        --
-        --if love.keyboard.isDown("left") then
-        --    vx = vx - self.speed
-        --    self.currentAnimation = self.animations.moveLeft
-        --    moving = true
-        --elseif love.keyboard.isDown("right") then
-        --    vx = vx + self.speed
-        --    self.currentAnimation = self.animations.moveRight
-        --    moving = true
-        --end
-
         if love.keyboard.isDown(self.keyMap.up) then
             vy = vy - self.speed
             self.currentAnimation = self.animations.moveUp
@@ -321,6 +311,9 @@ function Player:update(dt)
         self.y = cy + COLLIDER_RADIUS
 
         -- Advance animation if moving
+        if self.remote and self.stopped then
+            self.currentAnimation = self.animations.remote
+        end
         if moving then
             self.animationTimer = self.animationTimer + dt
             if self.animationTimer >= self.frameDuration then
