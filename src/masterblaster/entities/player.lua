@@ -49,6 +49,7 @@ function Player:applyItemEffect(item)
     elseif item.key == "ghost" then
         self.ghost = true
         self.ghostTimer = item.duration
+        self.collider:setCollisionClass('PlayerGhost')
     elseif item.key == "speedUp" then
         self.speed = self.speed + 20  -- Or adjust accordingly.
     elseif item.key == "death" then
@@ -257,6 +258,20 @@ function Player:update(dt)
         if self.ghostTimer <= 0 then
             self.ghost = false
             self.ghostTimer = nil
+            self.collider:setCollisionClass('Player')
+            -- Optionally, reset to a default or re-run directional checks:
+            if love.keyboard.isDown(self.keyMap.up) then
+                self.currentAnimation = self.animations.moveUp
+            elseif love.keyboard.isDown(self.keyMap.down) then
+                self.currentAnimation = self.animations.moveDown
+            elseif love.keyboard.isDown(self.keyMap.left) then
+                self.currentAnimation = self.animations.moveLeft
+            elseif love.keyboard.isDown(self.keyMap.right) then
+                self.currentAnimation = self.animations.moveRight
+            else
+                self.currentAnimation = self.animations.moveDown  -- default if no input
+            end
+            self.currentFrame = 1
         end
     end
 
@@ -288,7 +303,7 @@ function Player:update(dt)
         return
     end
 
-    -- Only do movement if collider exists
+    -- Movement logic
     local vx, vy = 0, 0
     local moving = false
 
@@ -332,7 +347,7 @@ function Player:update(dt)
         self.currentAnimation = self.animations.ghost
     end
 
-    if moving then
+    if moving or self.ghost then
         self.animationTimer = self.animationTimer + dt
         if self.animationTimer >= self.frameDuration then
             self.animationTimer = self.animationTimer - self.frameDuration

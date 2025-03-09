@@ -196,7 +196,7 @@ function Game.reset()
     Game.world:addCollisionClass('BombInactive', { ignores = {'Player'}, enters = {'Fireball'} })
     Game.world:addCollisionClass('Item', { enters = {'Player', 'Fireball', 'PlayerInvincible'} })
     Game.world:addCollisionClass('PlayerInvincible', { ignores = {'Fireball'}})
-    --Game.world:addCollisionClass('PlayerGhost', { ignores = {'Block'}})
+    Game.world:addCollisionClass('PlayerGhost', { ignores = {'Block'}, enters = {'Fireball', 'Item'}})
 
     -- Register the collision callbacks with the physics world.
 
