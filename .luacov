@@ -1,0 +1,25 @@
+return {
+  -- General settings
+  configfile = ".luacov",
+  statsfile = "luacov.stats.out",
+  reportfile = "luacov.report.out",
+  savestepsize = 100,
+  runreport = true,
+  deletestats = false,
+  codefromstrings = false,
+
+  -- Modules and files to include
+  include = {
+    "masterblaster"
+  },
+
+  -- Exclude unwanted files
+  exclude = {
+    "luacov$",
+    "luacov/reporter$",
+    "luacov/defaults$",
+    "luacov/runner$",
+    "luacov/stats$",
+    "luacov/tick$",
+  },
+}

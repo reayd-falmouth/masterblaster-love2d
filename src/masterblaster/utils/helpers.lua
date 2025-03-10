@@ -1,13 +1,22 @@
-local Helpers = {}
-Helpers.__index = Helpers
+local helpers = {}
 
-function Helpers.drawObjectSprite(quad, x, y)
-    love.graphics.setColor(UITheme.fgColor)  -- Draw with the foreground tint
-    love.graphics.draw(Assets.objectSpriteSheet, quad, x, y)
-    love.graphics.setColor(UITheme.highlightColor)  -- Restore highlight tint
+--- Draws an object sprite at a given position using the specified quad.
+-- @param loveGraphics The Love2D graphics module (dependency injection)
+-- @param theme The UITheme table containing colors
+-- @param assets The Assets table containing sprites
+-- @param quad The quad to draw
+-- @param x X-coordinate
+-- @param y Y-coordinate
+function helpers.drawObjectSprite(loveGraphics, theme, assets, quad, x, y)
+    loveGraphics.setColor(theme.fgColor)  -- Draw with foreground tint
+    loveGraphics.draw(assets.objectSpriteSheet, quad, x, y)
+    loveGraphics.setColor(theme.highlightColor)  -- Restore highlight tint
 end
 
-function Helpers.reverseTable(t)
+--- Reverses a table by creating a new reversed copy.
+-- @param t The table to reverse
+-- @return A new table with reversed elements
+function helpers.reverseTable(t)
     local reversed = {}
     for i = #t, 1, -1 do
         table.insert(reversed, t[i])
@@ -15,7 +24,10 @@ function Helpers.reverseTable(t)
     return reversed
 end
 
-function Helpers.reverseTableInPlace(t)
+--- Reverses a table in place.
+-- This modifies the original table instead of creating a new one.
+-- @param t The table to reverse in place
+function helpers.reverseTableInPlace(t)
     local i, j = 1, #t
     while i < j do
         t[i], t[j] = t[j], t[i]
@@ -24,4 +36,4 @@ function Helpers.reverseTableInPlace(t)
     end
 end
 
-return Helpers
+return helpers

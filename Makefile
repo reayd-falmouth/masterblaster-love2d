@@ -35,18 +35,29 @@ install: ## Install dependencies (Lua, Luarocks, Busted)
 	mkdir -p $(HOME)/.luarocks/bin
 	luarocks --local install busted || true
 	luarocks --local install luacheck || true
+	luarocks --local install luacov || true
+	luarocks --local install luacov-console || true
 
 run: ## Run the game with LÖVE
 	@echo "Running LÖVE game..."
 	cd $(GAME_DIR) && love .
 
-test: ## Run unit tests using Busted
+test: busted luacov
+
+busted: ## Run unit tests using Busted and display coverage
 	@echo "Running unit tests..."
-	LUA_PATH="$(GAME_DIR)/?.lua;$(GAME_DIR)/?/init.lua;" $(HOME)/.luarocks/bin/busted tests/
+	@rm -f luacov.stats.out luacov.report.out luacov.report.out.index
+	@LUA_PATH="$(GAME_DIR)/?.lua;$(GAME_DIR)/?/init.lua;;" $(HOME)/.luarocks/bin/busted src/tests/ --coverage
+
+luacov: ## Generate coverage
+	@echo "Running LuaCov..."
+	@$(HOME)/.luarocks/bin/luacov
+	@$(HOME)/.luarocks/bin/luacov-console src/masterblaster
+	@$(HOME)/.luarocks/bin/luacov-console -s
 
 lint: ## Run linting checks using Luacheck
-	@echo "Running unit tests..."
-	$(HOME)/.luarocks/bin/luacheck . --no-color --codes --exclude-files .luacheckrc
+	@echo "Running linting checks..."
+	@$(HOME)/.luarocks/bin/luacheck . --no-color --codes --exclude-files .luacheckrc
 
 checkin: ## Perform a git commit and push with a message prompt
 	@echo "Checking in code..."
