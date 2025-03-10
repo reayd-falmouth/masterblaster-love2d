@@ -95,7 +95,6 @@ function Bomb:new(player, remoteControlled)
     return self
 end
 
-
 function Bomb:update(dt)
     -- If we've already flagged for removal, skip updates entirely
     if self.toRemove then return end

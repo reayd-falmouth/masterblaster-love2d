@@ -26,7 +26,7 @@ local function playItemSound(key)
     elseif key == "bomb" or key == "powerUp" then
         pickupSound:play()
     elseif key == "superman" then
-        bubbleSound:play()
+        warpSound:play()
     elseif key == "timebomb" then
         bubbleSound:play()
     elseif key == "controller" then

@@ -28,12 +28,12 @@ Assets.ITEM_DEFINITIONS = {
     shopItem = true
   },
   {
-    enabled = false,
+    enabled = true,
     key = "superman",
     name = "SUPERMAN",
     cost = 2,
     row = 3, col = 2,
-    weight = 3,
+    weight = 50,
     shopItem = true
   },
   {
@@ -51,7 +51,7 @@ Assets.ITEM_DEFINITIONS = {
     name = "GHOST",
     cost = 3,
     row = 3, col = 5,
-    weight = 70,
+    weight = 3,
     duration = 10,
     shopItem = true
   },

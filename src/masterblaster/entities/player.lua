@@ -156,6 +156,107 @@ function Player:die()
     end
 end
 
+-- In player.lua, add this function:
+function Player:trySupermanPush()
+    -- Only perform a push if the player has superman ability and is not in ghost mode.
+    if not self.superman or self.ghost then
+        return
+    end
+
+    -- Determine a single cardinal direction based on input.
+    local dir = nil
+    if love.keyboard.isDown(self.keyMap.up) and not love.keyboard.isDown(self.keyMap.down)
+       and not love.keyboard.isDown(self.keyMap.left) and not love.keyboard.isDown(self.keyMap.right) then
+        dir = {row = -1, col = 0}
+    elseif love.keyboard.isDown(self.keyMap.down) and not love.keyboard.isDown(self.keyMap.up)
+           and not love.keyboard.isDown(self.keyMap.left) and not love.keyboard.isDown(self.keyMap.right) then
+        dir = {row = 1, col = 0}
+    elseif love.keyboard.isDown(self.keyMap.left) and not love.keyboard.isDown(self.keyMap.right)
+           and not love.keyboard.isDown(self.keyMap.up) and not love.keyboard.isDown(self.keyMap.down) then
+        dir = {row = 0, col = -1}
+    elseif love.keyboard.isDown(self.keyMap.right) and not love.keyboard.isDown(self.keyMap.left)
+           and not love.keyboard.isDown(self.keyMap.up) and not love.keyboard.isDown(self.keyMap.down) then
+        dir = {row = 0, col = 1}
+    end
+
+    if not dir then
+        return
+    end
+
+    -- Get the player’s current grid position.
+    local row, col = self:getGridPosition()
+    local targetRow = row + dir.row
+    local targetCol = col + dir.col
+
+    local pushedEntity = nil
+    -- Check for a bomb in the target cell.
+    for _, bomb in ipairs(Game.bombs or {}) do
+        local bombRow = math.floor(bomb.y / Game.map.tileSize) + 1
+        local bombCol = math.floor(bomb.x / Game.map.tileSize) + 1
+        if bombRow == targetRow and bombCol == targetCol then
+            pushedEntity = bomb
+            break
+        end
+    end
+
+    -- If no bomb was found, check for a block.
+    if not pushedEntity then
+        local cell = Game.map.tileMap[targetRow] and Game.map.tileMap[targetRow][targetCol]
+        if cell and cell.block then
+            pushedEntity = cell.block
+        end
+    end
+
+    if not pushedEntity then
+        return -- Nothing to push in that cell.
+    end
+
+    -- Check that the destination cell behind the object is free.
+    local destRow = targetRow + dir.row
+    local destCol = targetCol + dir.col
+    local blocked = false
+
+    -- Check bombs at destination.
+    for _, bomb in ipairs(Game.bombs or {}) do
+        local bombRow = math.floor(bomb.y / Game.map.tileSize) + 1
+        local bombCol = math.floor(bomb.x / Game.map.tileSize) + 1
+        if bombRow == destRow and bombCol == destCol then
+            blocked = true
+            break
+        end
+    end
+    -- Check blocks at destination.
+    if not blocked then
+        local cell = Game.map.tileMap[destRow] and Game.map.tileMap[destRow][destCol]
+        if cell and cell.block then
+            blocked = true
+        end
+    end
+
+    if blocked then
+        return -- Cannot push because another object is in the way.
+    end
+
+    -- Calculate new position based on destination cell.
+    local newX = (destCol - 1) * Game.map.tileSize + Game.map.tileSize / 2
+    local newY = (destRow - 1) * Game.map.tileSize + Game.map.tileSize / 2
+
+    pushedEntity.x = newX
+    pushedEntity.y = newY
+    if pushedEntity.collider then
+        pushedEntity.collider:setPosition(newX, newY)
+    end
+
+    -- For blocks, update the stored grid position if applicable.
+    if pushedEntity.row and pushedEntity.col then
+        pushedEntity.row = destRow
+        pushedEntity.col = destCol
+    end
+
+    -- Optionally play a sound effect or animation here.
+
+end
+
 function Player:new(playerIndex, keyMap)
     local self = setmetatable({}, Player)
     self.index = playerIndex or 1
@@ -287,6 +388,13 @@ function Player:update(dt)
             end
             self.currentFrame = 1
         end
+    end
+
+    -- Manage a cooldown to avoid pushing every frame.
+    self.pushCooldown = (self.pushCooldown or 0) - dt
+    if self.pushCooldown <= 0 then
+        self:trySupermanPush()
+        self.pushCooldown = 0.3  -- Cooldown period (in seconds).
     end
 
     -- Check collision with a Fireball if collider still exists
