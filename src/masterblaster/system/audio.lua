@@ -1,5 +1,4 @@
--- audio.lua
-
+-- masterblaster/system/audio.lua
 local Audio = {
     -- Separate volume for music and SFX
     musicVolume = 1.0,
@@ -7,21 +6,26 @@ local Audio = {
     musicPitch  = 1.5,
     sfxPitch    = 1.5,
 
-    -- Tables to hold your music and SFX sources
+    -- Tables to hold music and SFX sources
     musicSources = {},
     sfxSources   = {}
 }
 
+------------------------------------------------------
+-- SOUND GENERATION
+------------------------------------------------------
+
+--- Generates a short click sound.
+-- @return (Source) A generated click sound
 function Audio.generateClickSound()
-    local sampleRate = 44100       -- Samples per second
-    local duration = 0.05          -- 50 milliseconds click
+    local sampleRate = 44100
+    local duration = 0.05  -- 50ms click
     local numSamples = duration * sampleRate
     local soundData = love.sound.newSoundData(numSamples, sampleRate, 16, 1)
 
     for i = 0, numSamples - 1 do
         local t = i / sampleRate
-        -- Generate a decaying sine wave at 2000 Hz.
-        local amplitude = math.exp(-t * 50) -- Adjust the decay rate as needed
+        local amplitude = math.exp(-t * 50) -- Decay
         local sample = amplitude * math.sin(2 * math.pi * 2000 * t)
         soundData:setSample(i, sample)
     end
@@ -29,47 +33,55 @@ function Audio.generateClickSound()
     return love.audio.newSource(soundData)
 end
 
+--- Generates a short buzz sound.
+-- @return (Source) A generated buzz sound
 function Audio.generateBuzzSound()
-    local sampleRate = 44100       -- Samples per second
-    local duration = 0.1           -- Duration in seconds (adjust as needed)
+    local sampleRate = 44100
+    local duration = 0.1  -- 100ms buzz
     local numSamples = duration * sampleRate
     local soundData = love.sound.newSoundData(numSamples, sampleRate, 16, 1)
-    local frequency = 1500         -- Frequency in Hz for the buzz (adjust as desired)
 
+    local frequency = 1500
     for i = 0, numSamples - 1 do
         local t = i / sampleRate
-        -- Exponential decay envelope
-        local amplitude = math.exp(-t * 30)   -- Increase multiplier for a faster decay
-        -- Generate a square wave: if sine is >= 0 then 1, else -1
-        local sampleValue = amplitude * (math.sin(2 * math.pi * frequency * t) >= 0 and 1 or -1)
-        soundData:setSample(i, sampleValue)
+        local amplitude = math.exp(-t * 30)
+        local sample = amplitude * (math.sin(2 * math.pi * frequency * t) >= 0 and 1 or -1)
+        soundData:setSample(i, sample)
     end
 
     return love.audio.newSource(soundData)
 end
 
+------------------------------------------------------
+-- LOAD AUDIO FILES
+------------------------------------------------------
 
+--- Loads all sound files into the system.
 function Audio.load()
-    -- MUSIC (streamed)
-    Audio.musicSources.arena = love.audio.newSource("assets/sounds/music.ogg", "stream")
+    local function loadSound(path, mode)
+        if not love.filesystem.getInfo(path) then
+            error("Sound file not found: " .. path)
+        end
+        return love.audio.newSource(path, mode)
+    end
 
-    -- SFX (static)
-    Audio.sfxSources.alarm   = love.audio.newSource("assets/sounds/alarm.ogg", "static")
-    Audio.sfxSources.bingo   = love.audio.newSource("assets/sounds/bingo.ogg", "static")
-    Audio.sfxSources.bingo22 = love.audio.newSource("assets/sounds/bingo22.ogg", "static")
-    Audio.sfxSources.bubble  = love.audio.newSource("assets/sounds/bubble.ogg", "static")
-    Audio.sfxSources.cash    = love.audio.newSource("assets/sounds/cash.ogg", "static")
-    Audio.sfxSources.die     = love.audio.newSource("assets/sounds/die.ogg", "static")
-    Audio.sfxSources.effect  = love.audio.newSource("assets/sounds/effect.ogg", "static")
-    Audio.sfxSources.explode = love.audio.newSource("assets/sounds/explode.ogg", "static")
-    Audio.sfxSources.go      = love.audio.newSource("assets/sounds/go.ogg", "static")
-    Audio.sfxSources.warp    = love.audio.newSource("assets/sounds/warp.ogg", "static")
-    Audio.sfxSources.click   = love.audio.newSource("assets/sounds/burp.ogg", "static")
+    -- Load music
+    Audio.musicSources.arena = loadSound("assets/sounds/music.ogg", "stream")
 
-    -- Set initial volumes and (optionally) looping for music
+    -- Load SFX
+    local sfxFiles = {
+        "alarm", "bingo", "bingo22", "bubble", "cash",
+        "die", "effect", "explode", "go", "warp", "burp"
+    }
+
+    for _, name in ipairs(sfxFiles) do
+        Audio.sfxSources[name] = loadSound("assets/sounds/" .. name .. ".ogg", "static")
+    end
+
+    -- Set initial volume and looping settings
     for _, track in pairs(Audio.musicSources) do
         track:setVolume(Audio.musicVolume)
-        track:setLooping(true)  -- typical for a background music track
+        track:setLooping(true)
     end
 
     for _, sfx in pairs(Audio.sfxSources) do
@@ -78,18 +90,23 @@ function Audio.load()
 end
 
 ------------------------------------------------------
--- PLAY / STOP: MUSIC
+-- PLAY / STOP FUNCTIONS
 ------------------------------------------------------
+
+--- Plays a music track.
+-- @param name (string) The name of the track
 function Audio.playMusic(name)
     local track = Audio.musicSources[name]
     if track then
         track:setVolume(Audio.musicVolume)
         track:play()
     else
-        print("Warning: Attempt to play unknown MUSIC track:", name)
+        print("Warning: Attempt to play unknown music track:", name)
     end
 end
 
+--- Stops a music track.
+-- @param name (string) The name of the track
 function Audio.stopMusic(name)
     local track = Audio.musicSources[name]
     if track then
@@ -97,9 +114,8 @@ function Audio.stopMusic(name)
     end
 end
 
-------------------------------------------------------
--- PLAY / STOP: SFX
-------------------------------------------------------
+--- Plays a sound effect.
+-- @param name (string) The name of the sound effect
 function Audio.playSFX(name)
     local sfx = Audio.sfxSources[name]
     if sfx then
@@ -110,6 +126,8 @@ function Audio.playSFX(name)
     end
 end
 
+--- Stops a sound effect.
+-- @param name (string) The name of the sound effect
 function Audio.stopSFX(name)
     local sfx = Audio.sfxSources[name]
     if sfx then
@@ -120,6 +138,7 @@ end
 ------------------------------------------------------
 -- VOLUME CONTROLS
 ------------------------------------------------------
+
 function Audio.setMusicVolume(vol)
     Audio.musicVolume = vol
     for _, track in pairs(Audio.musicSources) do

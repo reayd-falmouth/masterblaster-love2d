@@ -44,3 +44,6 @@ luac.out
 build
 .amiga/
 .aider*
+
+# luacov files
+luacov.report.out.index
