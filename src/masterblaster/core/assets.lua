@@ -46,12 +46,12 @@ Assets.ITEM_DEFINITIONS = {
     shopItem = true
   },
   {
-    enabled = false,
+    enabled = true,
     key = "ghost",
     name = "GHOST",
     cost = 3,
     row = 3, col = 5,
-    weight = 50,
+    weight = 70,
     duration = 10,
     shopItem = true
   },
@@ -97,7 +97,7 @@ Assets.ITEM_DEFINITIONS = {
     name = "STOPPED",
     cost = 0,  -- Not available in shop
     row = 3, col = 11,
-    weight = 5,
+    weight = 3,
     duration = 10,
     shopItem = false
   },
@@ -107,7 +107,7 @@ Assets.ITEM_DEFINITIONS = {
     name = "COIN",
     cost = 1,
     row = 3, col = 12,
-    weight = 9,
+    weight = 10,
     shopItem = false
   },
   {
@@ -116,7 +116,7 @@ Assets.ITEM_DEFINITIONS = {
     name = "CONTROLLER",
     cost = 4,
     row = 3, col = 13,
-    weight = 70,
+    weight = 5,
     shopItem = true
   },
   {

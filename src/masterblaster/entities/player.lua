@@ -18,10 +18,13 @@ local deathSound = Audio.sfxSources.die
 
 -- inside your player.lua or Player class definition
 function Player:getGridPosition()
-    local row = math.floor(self.y / Game.map.tileSize) + 1
-    local col = math.floor(self.x / Game.map.tileSize) + 1
+    local cx, cy = self.collider:getPosition()  -- Get the collider's center.
+    local row = math.floor(cy / Game.map.tileSize) + 1
+    local col = math.floor(cx / Game.map.tileSize) + 1
+    log.debug("Player grid location (center): " .. row .. " " .. col)
     return row, col
 end
+
 
 -- Call this to start the 3-second countdown when hit during protection.
 function Player:activateProtectionTimer()
@@ -45,6 +48,8 @@ function Player:applyItemEffect(item)
         --self.collider:setCollisionClass('PlayerInvincible')
     elseif item.key == "ghost" then
         self.ghost = true
+        self.ghostTimer = item.duration
+        self.collider:setCollisionClass('PlayerGhost')
     elseif item.key == "speedUp" then
         self.speed = self.speed + 20  -- Or adjust accordingly.
     elseif item.key == "death" then
@@ -86,7 +91,21 @@ function Player:keyreleased(key)
     end
 end
 
+function Player:keypressed(key)
+    if self.isDead then
+        return
+    end
+    if self.keyMap and key == self.keyMap.bomb then
+        self:dropBomb()
+    end
+end
+
 function Player:dropBomb()
+    -- Prevent dropping bombs if the player is dead or collider is missing
+    if self.isDead or not self.collider then
+        return
+    end
+
     if not Game.bombs then Game.bombs = {} end
 
     -- Count how many bombs belong to this player
@@ -102,7 +121,6 @@ function Player:dropBomb()
         local bomb = nil
         if self.remote then
             log.debug("Remote bomb activated: use cursor keys to move the bomb.")
-            -- Implement remote bomb logic if needed
             bomb = Bomb:new(self, true)
             table.insert(Game.bombs, bomb)
             self.stopped = true
@@ -115,6 +133,7 @@ function Player:dropBomb()
         log.warning("You have reached your bomb limit!")
     end
 end
+
 
 -- Called once when the player dies
 function Player:die()
@@ -160,6 +179,8 @@ function Player:new(playerIndex, keyMap)
         die       = Assets.generateAnimation(13,21, self.baseYOffset, ROW_FRAME_COUNT,
                                              SPRITE_WIDTH, SPRITE_HEIGHT, GAP, spriteSheet),
         remote    = Assets.generateAnimation(22,24, self.baseYOffset, ROW_FRAME_COUNT,
+                                             SPRITE_WIDTH, SPRITE_HEIGHT, GAP, spriteSheet),
+        ghost    = Assets.generateAnimation(25,30, self.baseYOffset, ROW_FRAME_COUNT,
                                              SPRITE_WIDTH, SPRITE_HEIGHT, GAP, spriteSheet)
     }
 
@@ -205,6 +226,9 @@ function Player:new(playerIndex, keyMap)
 end
 
 function Player:update(dt)
+    -- If we've already flagged for removal, skip updates entirely
+    if self.toRemove then return end
+
     -- Update the protection timer and flicker if it’s running
     if self.protectionTimer then
         self.protectionTimer = self.protectionTimer - dt
@@ -242,8 +266,28 @@ function Player:update(dt)
         end
     end
 
-    -- If we've already flagged for removal, skip updates entirely
-    if self.toRemove then return end
+    -- Update the ghost timer if active.
+    if self.ghostTimer then
+        self.ghostTimer = self.ghostTimer - dt
+        if self.ghostTimer <= 0 then
+            self.ghost = false
+            self.ghostTimer = nil
+            self.collider:setCollisionClass('Player')
+            -- Optionally, reset to a default or re-run directional checks:
+            if love.keyboard.isDown(self.keyMap.up) then
+                self.currentAnimation = self.animations.moveUp
+            elseif love.keyboard.isDown(self.keyMap.down) then
+                self.currentAnimation = self.animations.moveDown
+            elseif love.keyboard.isDown(self.keyMap.left) then
+                self.currentAnimation = self.animations.moveLeft
+            elseif love.keyboard.isDown(self.keyMap.right) then
+                self.currentAnimation = self.animations.moveRight
+            else
+                self.currentAnimation = self.animations.moveDown  -- default if no input
+            end
+            self.currentFrame = 1
+        end
+    end
 
     -- Check collision with a Fireball if collider still exists
     if self.collider and self.collider:enter("Fireball") then
@@ -257,6 +301,7 @@ function Player:update(dt)
             self:die()
         end
     end
+
     -- If the player is dead, just run the death animation
     if self.isDead then
         self.animationTimer = self.animationTimer + dt
@@ -272,58 +317,70 @@ function Player:update(dt)
         return
     end
 
-    -- Only do movement if collider exists
-    if self.collider then
-        local vx, vy = 0, 0
-        local moving = false
+    -- Movement logic: compute velocity based on input.
+    local vx, vy = 0, 0
+    local moving = false
 
-        if love.keyboard.isDown(self.keyMap.up) then
-            vy = vy - self.speed
-            self.currentAnimation = self.animations.moveUp
-            moving = true
-        elseif love.keyboard.isDown(self.keyMap.down) then
-            vy = vy + self.speed
-            self.currentAnimation = self.animations.moveDown
-            moving = true
+    if love.keyboard.isDown(self.keyMap.up) then
+        vy = vy - self.speed
+        moving = true
+    elseif love.keyboard.isDown(self.keyMap.down) then
+        vy = vy + self.speed
+        moving = true
+    end
+
+    if love.keyboard.isDown(self.keyMap.left) then
+        vx = vx - self.speed
+        moving = true
+    elseif love.keyboard.isDown(self.keyMap.right) then
+        vx = vx + self.speed
+        moving = true
+    end
+
+    -- If the player is stopped, override any velocity to 0
+    if self.stopped then
+        vx, vy = 0, 0
+    end
+
+    -- Apply velocity and update logical (x, y) from collider’s position
+    self.collider:setLinearVelocity(vx, vy)
+    local cx, cy = self.collider:getPosition()
+    self.x = cx
+    self.y = cy + COLLIDER_RADIUS
+
+    -- Determine new animation based on state and input.
+    local newAnimation = nil
+    if self.ghost then
+        newAnimation = self.animations.ghost
+    elseif self.remote and self.stopped then
+        newAnimation = self.animations.remote
+    elseif love.keyboard.isDown(self.keyMap.up) then
+        newAnimation = self.animations.moveUp
+    elseif love.keyboard.isDown(self.keyMap.down) then
+        newAnimation = self.animations.moveDown
+    elseif love.keyboard.isDown(self.keyMap.left) then
+        newAnimation = self.animations.moveLeft
+    elseif love.keyboard.isDown(self.keyMap.right) then
+        newAnimation = self.animations.moveRight
+    end
+
+    -- If the animation has changed, reset the frame counter.
+    if newAnimation and newAnimation ~= self.currentAnimation then
+        self.currentAnimation = newAnimation
+        self.currentFrame = 1
+        self.animationTimer = 0
+    end
+
+    -- Advance animation if moving or in ghost state
+    if moving or self.ghost then
+        self.animationTimer = self.animationTimer + dt
+        if self.animationTimer >= self.frameDuration then
+            self.animationTimer = self.animationTimer - self.frameDuration
+            self.currentFrame = (self.currentFrame % #self.currentAnimation) + 1
         end
-
-        if love.keyboard.isDown(self.keyMap.left) then
-            vx = vx - self.speed
-            self.currentAnimation = self.animations.moveLeft
-            moving = true
-        elseif love.keyboard.isDown(self.keyMap.right) then
-            vx = vx + self.speed
-            self.currentAnimation = self.animations.moveRight
-            moving = true
-        end
-
-        -- If the player is stopped, override any velocity to 0
-        if self.stopped then
-            vx, vy = 0, 0
-        end
-
-        -- Apply velocity
-        self.collider:setLinearVelocity(vx, vy)
-
-        -- Update logical (x, y) from collider’s position
-        local cx, cy = self.collider:getPosition()
-        self.x = cx
-        self.y = cy + COLLIDER_RADIUS
-
-        -- Advance animation if moving
-        if self.remote and self.stopped then
-            self.currentAnimation = self.animations.remote
-        end
-        if moving then
-            self.animationTimer = self.animationTimer + dt
-            if self.animationTimer >= self.frameDuration then
-                self.animationTimer = self.animationTimer - self.frameDuration
-                self.currentFrame = (self.currentFrame % #self.currentAnimation) + 1
-            end
-        else
-            self.currentFrame = 1
-            self.animationTimer = 0
-        end
+    else
+        self.currentFrame = 1
+        self.animationTimer = 0
     end
 end
 

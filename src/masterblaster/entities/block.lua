@@ -57,7 +57,13 @@ function Block:new(row, col, tileSize, tileID, isDestructible, isShrinking)
 
     -- Create Box2D collider using stored x and y
     self.collider = Game.world:newRectangleCollider(self.x, self.y, tileSize, tileSize)
-    self.collider:setCollisionClass("Block")
+
+    if self.isDestructible then
+        self.collider:setCollisionClass("Block")
+    else
+        self.collider:setCollisionClass("Wall")
+    end
+
     self.collider:setType("static")
     self.collider:setSensor(false)
     self.collider:setObject(self)
