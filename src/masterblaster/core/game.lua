@@ -189,14 +189,15 @@ function Game.reset()
     Game.world:setQueryDebugDrawing(DEBUG)
 
     -- Register your collision classes
+    Game.world:addCollisionClass('Wall')
     Game.world:addCollisionClass('Player', { enters = {'Fireball', 'Item'} })
     Game.world:addCollisionClass('Fireball', { enters = {'Block', 'Item'} })
     Game.world:addCollisionClass('Block', { enters = {'Fireball'} })
     Game.world:addCollisionClass('Bomb', { enters = {'Fireball'} })
-    Game.world:addCollisionClass('BombInactive', { ignores = {'Player'}, enters = {'Fireball'} })
-    Game.world:addCollisionClass('Item', { enters = {'Player', 'Fireball', 'PlayerInvincible'} })
     Game.world:addCollisionClass('PlayerInvincible', { ignores = {'Fireball'}})
-    Game.world:addCollisionClass('PlayerGhost', { ignores = {'Block'}, enters = {'Fireball', 'Item'}})
+    Game.world:addCollisionClass('PlayerGhost', { ignores = {'Block', 'Bomb'}, enters = {'Fireball', 'Item'}})
+    Game.world:addCollisionClass('BombInactive', { ignores = {'Player', 'PlayerGhost', 'PlayerInvincible'}, enters = {'Fireball'} })
+    Game.world:addCollisionClass('Item', { enters = {'Player', 'Fireball', 'PlayerInvincible'} })
 
     -- Register the collision callbacks with the physics world.
 

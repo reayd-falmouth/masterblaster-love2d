@@ -91,7 +91,21 @@ function Player:keyreleased(key)
     end
 end
 
+function Player:keypressed(key)
+    if self.isDead then
+        return
+    end
+    if self.keyMap and key == self.keyMap.bomb then
+        self:dropBomb()
+    end
+end
+
 function Player:dropBomb()
+    -- Prevent dropping bombs if the player is dead or collider is missing
+    if self.isDead or not self.collider then
+        return
+    end
+
     if not Game.bombs then Game.bombs = {} end
 
     -- Count how many bombs belong to this player
@@ -107,7 +121,6 @@ function Player:dropBomb()
         local bomb = nil
         if self.remote then
             log.debug("Remote bomb activated: use cursor keys to move the bomb.")
-            -- Implement remote bomb logic if needed
             bomb = Bomb:new(self, true)
             table.insert(Game.bombs, bomb)
             self.stopped = true
@@ -120,6 +133,7 @@ function Player:dropBomb()
         log.warning("You have reached your bomb limit!")
     end
 end
+
 
 -- Called once when the player dies
 function Player:die()
@@ -252,7 +266,7 @@ function Player:update(dt)
         end
     end
 
-    -- Update the stopped timer if active.
+    -- Update the ghost timer if active.
     if self.ghostTimer then
         self.ghostTimer = self.ghostTimer - dt
         if self.ghostTimer <= 0 then
@@ -303,27 +317,23 @@ function Player:update(dt)
         return
     end
 
-    -- Movement logic
+    -- Movement logic: compute velocity based on input.
     local vx, vy = 0, 0
     local moving = false
 
     if love.keyboard.isDown(self.keyMap.up) then
         vy = vy - self.speed
-        self.currentAnimation = self.animations.moveUp
         moving = true
     elseif love.keyboard.isDown(self.keyMap.down) then
         vy = vy + self.speed
-        self.currentAnimation = self.animations.moveDown
         moving = true
     end
 
     if love.keyboard.isDown(self.keyMap.left) then
         vx = vx - self.speed
-        self.currentAnimation = self.animations.moveLeft
         moving = true
     elseif love.keyboard.isDown(self.keyMap.right) then
         vx = vx + self.speed
-        self.currentAnimation = self.animations.moveRight
         moving = true
     end
 
@@ -332,21 +342,36 @@ function Player:update(dt)
         vx, vy = 0, 0
     end
 
-    -- Apply velocity
+    -- Apply velocity and update logical (x, y) from collider’s position
     self.collider:setLinearVelocity(vx, vy)
-
-    -- Update logical (x, y) from collider’s position
     local cx, cy = self.collider:getPosition()
     self.x = cx
     self.y = cy + COLLIDER_RADIUS
 
-    -- Advance animation if moving
-    if self.remote and self.stopped then
-        self.currentAnimation = self.animations.remote
-    elseif self.ghost then
-        self.currentAnimation = self.animations.ghost
+    -- Determine new animation based on state and input.
+    local newAnimation = nil
+    if self.ghost then
+        newAnimation = self.animations.ghost
+    elseif self.remote and self.stopped then
+        newAnimation = self.animations.remote
+    elseif love.keyboard.isDown(self.keyMap.up) then
+        newAnimation = self.animations.moveUp
+    elseif love.keyboard.isDown(self.keyMap.down) then
+        newAnimation = self.animations.moveDown
+    elseif love.keyboard.isDown(self.keyMap.left) then
+        newAnimation = self.animations.moveLeft
+    elseif love.keyboard.isDown(self.keyMap.right) then
+        newAnimation = self.animations.moveRight
     end
 
+    -- If the animation has changed, reset the frame counter.
+    if newAnimation and newAnimation ~= self.currentAnimation then
+        self.currentAnimation = newAnimation
+        self.currentFrame = 1
+        self.animationTimer = 0
+    end
+
+    -- Advance animation if moving or in ghost state
     if moving or self.ghost then
         self.animationTimer = self.animationTimer + dt
         if self.animationTimer >= self.frameDuration then

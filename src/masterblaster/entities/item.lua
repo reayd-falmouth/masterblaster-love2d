@@ -149,6 +149,10 @@ function Item:update(dt)
         log.debug("Item: " .. self.key .. " and player collided")
         collision_type = "Player"
     end
+    if self.collider and self.collider:enter("PlayerGhost") then
+        log.debug("Item: " .. self.key .. " and player collided")
+        collision_type = "PlayerGhost"
+    end
 
     if collision_type then
         playItemSound(self.key)

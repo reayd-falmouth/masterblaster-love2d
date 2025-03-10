@@ -97,7 +97,7 @@ Assets.ITEM_DEFINITIONS = {
     name = "STOPPED",
     cost = 0,  -- Not available in shop
     row = 3, col = 11,
-    weight = 5,
+    weight = 3,
     duration = 10,
     shopItem = false
   },
@@ -107,7 +107,7 @@ Assets.ITEM_DEFINITIONS = {
     name = "COIN",
     cost = 1,
     row = 3, col = 12,
-    weight = 9,
+    weight = 10,
     shopItem = false
   },
   {

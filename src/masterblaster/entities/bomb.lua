@@ -118,19 +118,18 @@ function Bomb:update(dt)
         self.currentFrame = (self.currentFrame % #self.currentAnimation) + 1
     end
 
-    -- Handle collision until the player has moved away from the bomb
-    local dx = self.x - self.owner.x
-    local dy = self.y - self.owner.y
-    local separation = math.sqrt(dx * dx + dy * dy)
-    local safeDistance = self.owner.colliderRadius + COLLIDER_RADIUS + 2  -- add a small buffer
+    -- Handle collision class switching only if collider exists.
+    if self.collider then
+        local dx = self.x - self.owner.x
+        local dy = self.y - self.owner.y
+        local separation = math.sqrt(dx * dx + dy * dy)
+        local safeDistance = self.owner.colliderRadius + COLLIDER_RADIUS + 2  -- add a small buffer
 
-    if separation > safeDistance then
-        -- Switch collision class so that collisions with the player are now enabled.
-        self.collider:setCollisionClass("Bomb")
-        -- (Make sure that "Bomb" collides with "Player" while "BombInactive" does not.)
-    else
-        -- Optionally, keep it in the inactive class
-        self.collider:setCollisionClass("BombInactive")
+        if separation > safeDistance then
+            self.collider:setCollisionClass("Bomb")
+        else
+            self.collider:setCollisionClass("BombInactive")
+        end
     end
 
     if self.timer <= 0 and self.state ~= "exploding" and not self.waiting then
@@ -186,14 +185,15 @@ function Bomb:update(dt)
             end
         end
 
+        -- Apply velocity to the collider if it exists.
+        if self.collider then
+            self.collider:setLinearVelocity(vx, vy)
 
-        -- Apply velocity
-        self.collider:setLinearVelocity(vx, vy)
-
-        -- Update logical (x, y) from collider’s position
-        local cx, cy = self.collider:getPosition()
-        self.x = cx
-        self.y = cy
+            -- Update logical (x, y) from collider’s position.
+            local cx, cy = self.collider:getPosition()
+            self.x = cx
+            self.y = cy
+        end
     end
 end
 
