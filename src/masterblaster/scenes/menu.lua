@@ -4,6 +4,7 @@ local Font = require("system.fonts")
 local UITheme = require("core.theme")  -- Import shared colors
 local Game = require("core.game")
 local Settings = require("config.settings")  -- Import settings module
+local Stats = require("core.stats")
 
 -- Function to retrieve boolean choices in a structured format
 local function getBooleanChoices()
@@ -37,7 +38,7 @@ local imageFont
 function MainMenu.load()
     Font.load()
     imageFont = Font.getImageFont()
-    love.graphics.setBackgroundColor(UITheme.bgColor)
+    love.graphics.setBackgroundColor(UITheme.defaultTheme.backgroundColor)
 end
 
 function MainMenu.update(dt)
@@ -59,7 +60,7 @@ function MainMenu.draw()
 
     -- Draw title
     love.graphics.setFont(imageFont)
-    love.graphics.setColor(UITheme.normalColor)
+    love.graphics.setColor(UITheme.defaultTheme.primaryColor)
     love.graphics.print("      MAIN MENU      ", containerX, titleY, 0, fontScale, fontScale)
     love.graphics.print("      ---------      ", containerX, separatorY, 0, fontScale, fontScale)
 
@@ -69,11 +70,11 @@ function MainMenu.draw()
 
         -- Highlight selected item
         if i == selectedIndex then
-            love.graphics.setColor(UITheme.highlightColor)
+            love.graphics.setColor(UITheme.defaultTheme.secondaryColor)
             love.graphics.print(">", containerX - (10 * fontScale), y, 0, fontScale, fontScale)
         end
 
-        love.graphics.setColor(UITheme.normalColor)
+        love.graphics.setColor(UITheme.defaultTheme.primaryColor)
 
         -- Determine the proper display value for the item
         local valueToDisplay = item.value
@@ -127,7 +128,8 @@ function MainMenu.keypressed(key)
         end
     elseif key == "return" or key == "kpenter" then
         -- Apply settings and start game
-        PlayerStats.init(Settings.players)
+        PlayerStats = Stats.new({ Settings.startMoney, Settings.startMoneyAmount })
+        PlayerStats:init(Settings.players)
         switchState(Game)
     end
 end

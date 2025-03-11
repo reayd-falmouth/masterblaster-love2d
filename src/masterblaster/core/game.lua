@@ -308,7 +308,7 @@ function Game.update(dt)
             if Game.winTimer >= 3 then
                 if #activePlayers == 1 then
                     local winner = activePlayers[1]
-                    PlayerStats.addWin(winner.index)
+                    PlayerStats:addWin(winner.index)
                 end
                 Game.exitToStandings()
             end
@@ -333,7 +333,7 @@ function Game.draw()
 
     if not gameStarted and countdown > 0 then
         local countdownText = tostring(countdown)
-        love.graphics.setColor(UITheme.highlightColor)
+        love.graphics.setColor(UITheme.defaultTheme.secondaryColor)
         love.graphics.printf(countdownText, 0, VIRTUAL_HEIGHT / 2, VIRTUAL_WIDTH, "center")
         love.graphics.setColor(1, 1, 1, 1)
 

@@ -4,7 +4,7 @@ local Title = require("scenes.title")
 local currentState = Title
 
 Settings = require("config.settings")
-PlayerStats = require("core.stats")
+
 
 -- Define players with unique control mappings
 KeyMaps = {
@@ -111,6 +111,7 @@ function switchState(newState, musicFile)
 
     currentState = newState
     if currentState.load then
+        LOG.info("Going to title...")
         currentState.load()
     end
 

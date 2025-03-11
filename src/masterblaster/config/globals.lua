@@ -19,12 +19,12 @@ DEBUG = true
 TILE_SIZE = 16
 
 -- Set the default logging level
-LOG_LEVEL = LOG.ERROR
+LOG_LEVEL = LOG.INFO
 
 -- Adjust log level based on debug mode
 -- If DEBUG mode is enabled, log more details for development
 if DEBUG then
     LOG.LOG_LEVEL = LOG.DEBUG
 else
-    LOG.LOG_LEVEL = LOG_LEVEL
+    LOG.LOG_LEVEL = LOG.INFO
 end
