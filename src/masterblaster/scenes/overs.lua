@@ -12,7 +12,7 @@ local winSound = nil
 function Overs.load()
     -- Find the winning player (the first with wins >= winsNeeded)
     for i, stats in ipairs(PlayerStats.players) do
-        if stats.wins >= GameSettings.winsNeeded then
+        if stats.wins >= Settings.winsNeeded then
             winningPlayerIndex = i
             break
         end

@@ -34,7 +34,7 @@ function Credits.load()
     Font.load()
 
     -- Set background color (from your UI theme)
-    love.graphics.setBackgroundColor(UITheme.bgColor)
+    love.graphics.setBackgroundColor(UITheme.defaultTheme.primaryColor)
 end
 
 function Credits.update(dt)
@@ -44,7 +44,7 @@ end
 function Credits.draw()
     local imageFont = Font.getImageFont()
     love.graphics.setFont(imageFont)
-    love.graphics.setColor(UITheme.normalColor)
+    love.graphics.setColor(UITheme.defaultTheme.secondaryColor)
 
     -- Use your virtual resolution or Love2D window size
     local windowWidth  = VIRTUAL_WIDTH

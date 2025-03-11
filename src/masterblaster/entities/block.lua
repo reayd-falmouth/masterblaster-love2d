@@ -137,7 +137,7 @@ function Block:destroyBlock()
         -- Spawn an item at this block's location using the new module.
         local newItem = Item:spawn(self.x, self.y)
         if newItem then
-            log.debug("New item " .. newItem.key .. " spawned at " .. self.x .. ", " .. self.y)
+            LOG.debug("New item " .. newItem.key .. " spawned at " .. self.x .. ", " .. self.y)
             -- Instead of adding to a global list, find the cell for this block and assign the item.
             if Game.map.tileMap[self.row] and Game.map.tileMap[self.row][self.col] then
                 Game.map.tileMap[self.row][self.col].item = newItem

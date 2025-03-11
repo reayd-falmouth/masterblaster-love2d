@@ -73,10 +73,10 @@ function Bomb:new(player, remoteControlled)
     self.collider:setSensor(false)  -- Disable collision initially.
 
     if not self.remoteControlled then
-        log.info("Not remote controlled setting static collision")
+        LOG.info("Not remote controlled setting static collision")
         self.collider:setType("static")
     else
-        log.info("Remote controlled friction set to 0")
+        LOG.info("Remote controlled friction set to 0")
         self.collider:setFriction(0)
     end
     self.collider:setCollisionClass("BombInactive")
@@ -87,7 +87,7 @@ function Bomb:new(player, remoteControlled)
     if player.timebomb then
         self.waiting = true
         self.timer = 0
-        log.info("Timebomb mode active: bomb waiting for key release")
+        LOG.info("Timebomb mode active: bomb waiting for key release")
     else
         self.waiting = false
     end
@@ -108,7 +108,7 @@ function Bomb:update(dt)
 
     -- Only count down the timer if not waiting for space release.
     if not self.waiting then
-        log.debug("Bomb counting down")
+        LOG.debug("Bomb counting down")
         self.timer = self.timer - dt
     end
 
@@ -137,7 +137,7 @@ function Bomb:update(dt)
     end
 
     if self.remoteControlled and self.state ~= "exploding" then
-        log.debug("Moving remote controlled bomb...")
+        LOG.debug("Moving remote controlled bomb...")
         local vx, vy = 0, 0
         local moving = false
 

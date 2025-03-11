@@ -51,12 +51,12 @@ end
 
 -- Helper function to spawn players
 local function spawnPlayers()
-    log.debug("SPAWNING PLAYERS")
-    local numPlayers = GameSettings.players
-    log.debug("  Getting spawn positions...")
+    LOG.debug("SPAWNING PLAYERS")
+    local numPlayers = Settings.players
+    LOG.debug("  Getting spawn positions...")
     local spawnPositions = Spawns:getSpawnPositions(numPlayers, Game.map)
 
-    log.debug("  Setting positions..")
+    LOG.debug("  Setting positions..")
     Game.players = {}
     for i = 1, numPlayers do
         local p = Player:new(i, KeyMaps[i].keys)
@@ -66,7 +66,7 @@ local function spawnPlayers()
         table.insert(Game.players, p)
     end
 
-    log.debug("SPAWNING COMPLETE")
+    LOG.debug("SPAWNING COMPLETE")
 end
 
 local function dumpObjectInfo(obj)
@@ -205,7 +205,7 @@ function Game.reset()
     countdown = 3
     countdownTimer = 1
     gameStarted = false
-    gameTime = GameSettings.shrinking == "ON" and 180 or 300
+    gameTime = Settings.shrinking and 180 or 300
     alarmThreshold = gameTime / 3
     alarmTriggered = false
     playerResults = {}
@@ -245,7 +245,7 @@ function Game.update(dt)
         gameTime = gameTime - dt
 
         -- Alarm logic
-        if GameSettings.shrinking == "ON" then
+        if Settings.shrinking then
             if gameTime <= alarmThreshold and not alarmTriggered then
                 alarmTriggered = true
                 alarmSound:play()

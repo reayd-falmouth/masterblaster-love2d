@@ -53,7 +53,7 @@ function Standings.update(dt)
 
         local tournamentWon = false
         for i, stats in ipairs(PlayerStats.players) do
-            if stats.wins >= GameSettings.winsNeeded then
+            if stats.wins >= Settings.winsNeeded then
                 tournamentWon = true
                 break
             end
@@ -61,8 +61,8 @@ function Standings.update(dt)
 
         if tournamentWon then
             switchState(GameOver)
-        elseif GameSettings.shop == "ON" then
-            if GameSettings.gambling == "ON" then
+        elseif Settings.shop then
+            if Settings.gambling then
                 switchState(WheelOFortune)
             else
                 switchState(Shop)

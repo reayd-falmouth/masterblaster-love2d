@@ -3,7 +3,7 @@ local Audio = require("system.audio")
 local Title = require("scenes.title")
 local currentState = Title
 
-GameSettings = require("config.settings")
+Settings = require("config.settings")
 PlayerStats = require("core.stats")
 
 -- Define players with unique control mappings
@@ -96,7 +96,7 @@ function love.keypressed(key)
 end
 
 function love.keyreleased(key)
-    log.debug("love.keyreleased: " .. key)
+    LOG.debug("love.keyreleased: " .. key)
     if currentState.keyreleased then
         currentState.keyreleased(key)
     end

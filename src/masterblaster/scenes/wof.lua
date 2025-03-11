@@ -81,7 +81,7 @@ function WheelOfFortune.update(dt)
     if not isSpinning and not stateSwitched then
         postSpinTimer = postSpinTimer + dt
         if postSpinTimer >= 3 then
-            if GameSettings.shop == "ON" then
+            if Settings.shop == "ON" then
                 switchState(Shop)
             else
                 switchState(Game)

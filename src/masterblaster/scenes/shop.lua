@@ -22,7 +22,7 @@ end
 
 -- This function reinitializes the shop each time the shop state is entered.
 function Shop.load()
-    if GameSettings.shop == "OFF" then
+    if Settings.shop then
         switchState(Game)
         return
     end

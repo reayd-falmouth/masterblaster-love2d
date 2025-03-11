@@ -3,124 +3,132 @@ local MainMenu = {}
 local Font = require("system.fonts")
 local UITheme = require("core.theme")  -- Import shared colors
 local Game = require("core.game")
-local Shop = require("scenes.shop")
-local WheelOFortune = require("scenes.wof")
+local Settings = require("config.settings")  -- Import settings module
 
--- A list of menu items that can be navigated and toggled
+-- Function to retrieve boolean choices in a structured format
+local function getBooleanChoices()
+    return { { label = "ON", value = true }, { label = "OFF", value = false } }
+end
+
+-- Function to retrieve Yes/No choices in a structured format
+local function getYesNoChoices()
+    return { { label = "YES", value = true }, { label = "NO", value = false } }
+end
+
+-- Menu item definitions
 local menuItems = {
-    { label = "WINS NEEDED", value = GameSettings.winsNeeded, choices = {1, 2, 3, 4, 5, 6, 7, 8, 9}, key = "winsNeeded" },
-    { label = "PLAYERS", value = GameSettings.players, choices = {2, 3, 4, 5}, key = "players" },
-    { label = "SHOP", value = GameSettings.shop, choices = {"ON", "OFF"}, key = "shop" },
-    { label = "SHRINKING", value = GameSettings.shrinking, choices = {"ON", "OFF"}, key = "shrinking" },
-    { label = "FASTIGNITION", value = GameSettings.fastIgnition, choices = {"ON", "OFF"}, key = "fastIgnition" },
-    { label = "STARTMONEY", value = GameSettings.startMoney, choices = {"ON", "OFF"}, key = "startMoney" },
-    { label = "NORMALLEVEL", value = GameSettings.normalLevel, choices = {"YES", "NO"}, key = "normalLevel" },
-    { label = "GAMBLING", value = GameSettings.gambling, choices = {"YES", "NO"}, key = "gambling" },
+    { label = "WINS NEEDED", value = Settings.DEFAULTS.winsNeeded, choices = {1, 2, 3, 4, 5, 6, 7, 8, 9}, key = "winsNeeded" },
+    { label = "PLAYERS", value = Settings.DEFAULTS.players, choices = {2, 3, 4, 5}, key = "players" },
+    { label = "SHOP", value = Settings.DEFAULTS.shop, choices = getBooleanChoices(), key = "shop" },
+    { label = "SHRINKING", value = Settings.DEFAULTS.shrinking, choices = getBooleanChoices(), key = "shrinking" },
+    { label = "FASTIGNITION", value = Settings.DEFAULTS.fastIgnition, choices = getBooleanChoices(), key = "fastIgnition" },
+    { label = "START MONEY", value = Settings.DEFAULTS.startMoney, choices = getBooleanChoices(), key = "startMoney" },
+    { label = "NORMAL LEVEL", value = Settings.DEFAULTS.normalLevel, choices = getYesNoChoices(), key = "normalLevel" },
+    { label = "GAMBLING", value = Settings.DEFAULTS.gambling, choices = getYesNoChoices(), key = "gambling" },
+
 }
 
+-- Selected menu index
 local selectedIndex = 1
-
--- Layout parameters for fixed-width container
-local containerX = 0 -- Will be calculated in draw() to center container
 
 -- Font variables (set in load)
 local imageFont
 
 function MainMenu.load()
-    -- Load custom fonts from your font module
     Font.load()
-
-    -- Use your fonts: m6x11 for title and m6x11plus for menu items
     imageFont = Font.getImageFont()
-
-    -- Set background color
     love.graphics.setBackgroundColor(UITheme.bgColor)
 end
 
 function MainMenu.update(dt)
-    -- No dynamic updates required for this static menu
+    -- Static menu; no dynamic updates needed
 end
 
 function MainMenu.draw()
-    -- Get window size
-    local windowWidth = VIRTUAL_WIDTH
-    local windowHeight = VIRTUAL_HEIGHT
-
-    -- Define scale factors
-    local fontScale = 1
-    local scaledPadding = 3 * fontScale -- Scale padding dynamically
+    local windowWidth, windowHeight = VIRTUAL_WIDTH, VIRTUAL_HEIGHT
+    local fontScale, scaledPadding = 1, 3
     local lineSpacing = (imageFont:getHeight() + scaledPadding) * fontScale
-
-    -- Calculate text width dynamically
     local menuWidth = imageFont:getWidth("      MAIN MENU      ") * fontScale
-
-    -- Calculate total menu height dynamically
     local totalMenuHeight = (#menuItems * lineSpacing) + (imageFont:getHeight() * fontScale * 4)
 
-    -- Calculate center positions
-    containerX = (windowWidth / 2) - (menuWidth / 2) -- Perfect horizontal centering
-    local titleY = (windowHeight / 2) - (totalMenuHeight / 2) -- Perfect vertical centering
+    -- Center menu
+    local containerX = (windowWidth / 2) - (menuWidth / 2)
+    local titleY = (windowHeight / 2) - (totalMenuHeight / 2)
     local separatorY = titleY + (imageFont:getHeight() * fontScale)
-    local menuStartY = separatorY + (imageFont:getHeight() * fontScale) + (5 * fontScale) -- Adjusted for balance
+    local menuStartY = titleY + (imageFont:getHeight() * fontScale * 2) + (5 * fontScale)
 
-    -- Draw the title
+    -- Draw title
     love.graphics.setFont(imageFont)
     love.graphics.setColor(UITheme.normalColor)
     love.graphics.print("      MAIN MENU      ", containerX, titleY, 0, fontScale, fontScale)
     love.graphics.print("      ---------      ", containerX, separatorY, 0, fontScale, fontScale)
 
-    -- Draw each menu item using monospaced text alignment
-    love.graphics.setFont(imageFont)
+    -- Draw menu items
     for i, item in ipairs(menuItems) do
         local y = menuStartY + (i - 1) * lineSpacing
 
-        -- Draw the marker '>' in purple for the selected item
+        -- Highlight selected item
         if i == selectedIndex then
             love.graphics.setColor(UITheme.highlightColor)
-            love.graphics.print(">", containerX - (10 * fontScale), y, 0, fontScale, fontScale) -- Adjust for balance
+            love.graphics.print(">", containerX - (10 * fontScale), y, 0, fontScale, fontScale)
         end
 
-        -- Draw the menu text in blue (normal color)
         love.graphics.setColor(UITheme.normalColor)
 
-        -- Format label and value
-        local formattedText = string.format("  %-12s : %-3s", item.label, tostring(item.value))
+        -- Determine the proper display value for the item
+        local valueToDisplay = item.value
+        if type(valueToDisplay) == "table" then
+            valueToDisplay = valueToDisplay.label
+        elseif type(valueToDisplay) == "boolean" then
+            -- Check the first choice's label to decide how to display the boolean
+            local firstChoiceLabel = (item.choices[1] and item.choices[1].label) or ""
+            if firstChoiceLabel == "ON" then
+                valueToDisplay = valueToDisplay and "ON" or "OFF"
+            elseif firstChoiceLabel == "YES" then
+                valueToDisplay = valueToDisplay and "YES" or "NO"
+            else
+                valueToDisplay = tostring(valueToDisplay)
+            end
+        elseif valueToDisplay == nil then
+            valueToDisplay = "N/A"
+        else
+            valueToDisplay = tostring(valueToDisplay)
+        end
 
-        -- Print the formatted text
+        local formattedText = string.format("  %-12s : %-3s", item.label, valueToDisplay)
         love.graphics.print(formattedText, containerX, y, 0, fontScale, fontScale)
     end
 end
 
 function MainMenu.keypressed(key)
     if key == "up" then
-        selectedIndex = selectedIndex - 1
-        if selectedIndex < 1 then selectedIndex = #menuItems end
+        selectedIndex = (selectedIndex - 1 < 1) and #menuItems or selectedIndex - 1
     elseif key == "down" then
-        selectedIndex = selectedIndex + 1
-        if selectedIndex > #menuItems then selectedIndex = 1 end
+        selectedIndex = (selectedIndex + 1 > #menuItems) and 1 or selectedIndex + 1
     elseif key == "left" or key == "right" then
         local item = menuItems[selectedIndex]
         if item.choices then
             local idx = 1
             for i, choice in ipairs(item.choices) do
-                if choice == item.value then
+                if (type(choice) == "table" and choice.value == item.value) or choice == item.value then
                     idx = i
                     break
                 end
             end
 
             if key == "left" and idx > 1 then
-                item.value = item.choices[idx - 1]
+                item.value = (type(item.choices[idx - 1]) == "table") and item.choices[idx - 1].value or item.choices[idx - 1]
             elseif key == "right" and idx < #item.choices then
-                item.value = item.choices[idx + 1]
+                item.value = (type(item.choices[idx + 1]) == "table") and item.choices[idx + 1].value or item.choices[idx + 1]
             end
 
-            -- Update GameSettings dynamically
-            GameSettings[item.key] = item.value
+            -- Apply changes dynamically
+            Settings[item.key] = item.value
         end
     elseif key == "return" or key == "kpenter" then
-        PlayerStats.init(GameSettings.players)
-        switchState(Game) -- Switch to game state
+        -- Apply settings and start game
+        PlayerStats.init(Settings.players)
+        switchState(Game)
     end
 end
 
