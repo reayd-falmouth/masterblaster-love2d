@@ -47,3 +47,4 @@ build
 
 # luacov files
 luacov.report.out.index
+*.out.index

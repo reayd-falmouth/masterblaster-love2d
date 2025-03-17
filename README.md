@@ -1,7 +1,7 @@
 # masterblaster-löve
 Remake of the Amiga game Master Blaster in LÖVE.
 
-![masterblaster](./itch/cover.jpg)
+![masterblaster](./.itch/cover.jpg)
 
 ## Overview
 masterblaster-löve is a modern remake of the classic Amiga game Master Blaster, developed using the [LÖVE](https://love2d.org/) framework. This project aims to capture the spirit and gameplay of the original while introducing improvements and modern programming practices.

@@ -6,8 +6,8 @@ LOG = require("utils.logging")
 VERSION = "v1.0"
 
 -- Virtual resolution settings (used for scaling the game window properly)
-VIRTUAL_WIDTH = 640
-VIRTUAL_HEIGHT = 512
+VIRTUAL_WIDTH = 320
+VIRTUAL_HEIGHT = 256
 
 -- Enable or disable background music
 ENABLE_MUSIC = false
