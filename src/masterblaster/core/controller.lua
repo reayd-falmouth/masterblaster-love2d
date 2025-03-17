@@ -1,5 +1,3 @@
--- core/controller.lua
-
 local ControllerManager = {}
 ControllerManager.__index = ControllerManager
 
@@ -13,32 +11,29 @@ function ControllerManager:new(mappingFile)
 end
 
 function ControllerManager:loadMappings()
-    local mappingsData, readErr = love.filesystem.read(self.mappingFile)
-    if not mappingsData then
-        print("Warning: Could not read mapping file:", readErr)
-        return false
+    local mappingsData = love.filesystem.read(self.mappingFile)
+    if mappingsData then
+        love.joystick.loadGamepadMappings(mappingsData)
+    else
+        print("Warning: Mapping file not found, continuing without custom mappings.")
     end
-
-    local success = love.joystick.loadGamepadMappings(mappingsData)
-    if not success then
-        print("Warning: Failed to parse joystick mappings.")
-        return false
-    end
-
-    return true
 end
 
 function ControllerManager:addJoystick(joystick)
+    local playerNumber = #self.joysticks + 1
     table.insert(self.joysticks, {
         joystick = joystick,
-        player = #self.joysticks + 1
+        player = playerNumber
     })
+    print("Assigned joystick '" .. joystick:getName() .. "' to player " .. playerNumber)
 end
+
 
 function ControllerManager:removeJoystick(joystick)
     for i, entry in ipairs(self.joysticks) do
         if entry.joystick == joystick then
             table.remove(self.joysticks, i)
+            print("Removed joystick from player", entry.player)
             break
         end
     end
@@ -55,15 +50,13 @@ function ControllerManager:getPlayerInputs()
     local inputs = {}
     for _, entry in ipairs(self.joysticks) do
         local joystick = entry.joystick
-        if joystick:isGamepad() then  -- Make sure this is true
+        if joystick:isGamepad() then
             table.insert(inputs, {
                 player = entry.player,
                 leftX = joystick:getGamepadAxis("leftx"),
                 leftY = joystick:getGamepadAxis("lefty"),
                 action = joystick:isGamepadDown("a")
             })
-        else
-            print("Joystick not recognized as gamepad:", joystick:getName())
         end
     end
     return inputs

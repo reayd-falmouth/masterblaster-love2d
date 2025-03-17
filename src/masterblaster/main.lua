@@ -88,12 +88,31 @@ function love.update(dt)
         currentState.update(dt)
     end
 
+    -- Get joystick inputs
     local inputs = controllerManager:getPlayerInputs()
-    -- Pass inputs to current state or global game logic as needed
+
+    -- Map joystick inputs to your player logic
     for _, input in ipairs(inputs) do
-        -- Example debug print (replace with actual game logic)
-        print(string.format("Player %d: Axis (%0.2f, %0.2f), Action: %s",
-            input.player, input.leftX, input.leftY, tostring(input.action)))
+        local playerIndex = input.player
+        local playerControls = KeyMaps[player]
+
+        -- Example logic: You need to define how your player objects move
+        -- Replace this with your actual player movement/actions:
+        if input.leftX < -0.2 then
+            print(KeyMaps[input.player].name .. " moves left")
+        elseif input.leftX > 0.2 then
+            print(KeyMaps[input.player].name .. " moves right")
+        end
+
+        if input.leftY < -0.2 then
+            print(KeyMaps[input.player].name .. " moves up")
+        elseif input.leftY > 0.2 then
+            print(KeyMaps[input.player].name .. " moves down")
+        end
+
+        if input.action then
+            print(KeyMaps[input.player].name .. " pressed action/bomb button")
+        end
     end
 end
 
