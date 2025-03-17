@@ -44,3 +44,4 @@ luac.out
 build
 .amiga/
 .aider*
+*.out.index

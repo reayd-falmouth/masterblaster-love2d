@@ -13,13 +13,19 @@ function Title:update(dt)
 end
 
 function Title:draw()
-    -- Draw the Title image at the top left (adjust coordinates as needed)
-    love.graphics.draw(titleImage, 0, 0)
+    -- Calculate scaling factors so that the title image fills the virtual resolution.
+    local imgWidth = titleImage:getWidth()
+    local imgHeight = titleImage:getHeight()
+    local scaleX = VIRTUAL_WIDTH / imgWidth
+    local scaleY = VIRTUAL_HEIGHT / imgHeight
+
+    -- Draw the image scaled to the full virtual resolution.
+    love.graphics.draw(titleImage, 0, 0, 0, scaleX, scaleY)
 end
 
 function Title:keypressed(key)
-    -- Switch state to credits.lua when any key is pressed
-        switchState(require("scenes.credits"))
+    -- Switch state to credits.lua when any key is pressed.
+    switchState(require("scenes.credits"))
 end
 
 return Title
