@@ -47,6 +47,10 @@ function changeResolution(newWidth, newHeight)
 end
 
 function love.load()
+    if love.filesystem.exists("gamecontrollerdb.txt") then
+        love.joystick.loadGamepadMappings("gamecontrollerdb.txt")
+    end
+
     local iconData = love.image.newImageData("assets/images/icon_32x.png")
     love.window.setIcon(iconData)
 
