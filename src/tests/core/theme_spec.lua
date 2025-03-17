@@ -8,11 +8,11 @@ describe("Theme Module", function()
 
     describe("Default Theme", function()
         it("should have the correct default primary color", function()
-            assert.are.same({0.333, 0, 0.733, 1}, defaultTheme.primaryColor)
+            assert.are.same({0, 0.2, 1, 1}, defaultTheme.primaryColor)
         end)
 
         it("should have the correct default secondary color", function()
-            assert.are.same({0, 0.2, 1, 1}, defaultTheme.secondaryColor)
+            assert.are.same({0.333, 0, 0.733, 1}, defaultTheme.secondaryColor)
         end)
 
         it("should have the correct default background color", function()

@@ -1,6 +1,3 @@
--- test_assets.lua
-local Assets = require "core.assets" -- Adjust the path as needed
-
 -- Create a stub for love.graphics
 local stubLoveGraphics = {}
 
@@ -25,28 +22,32 @@ stubLoveGraphics.newQuad = function(x, y, w, h, imgWidth, imgHeight)
     return { x = x, y = y, w = w, h = h, imgWidth = imgWidth, imgHeight = imgHeight }
 end
 
+-- Define globals needed before requiring the Assets module
+_G.love = { graphics = stubLoveGraphics }
+_G.Settings = { fastIgnition = true, shop = false }
+
+local Assets = require "core.assets" -- Adjust the path as needed
+
 describe("Assets module", function()
     local assets
     before_each(function()
-        -- Pass in stubLoveGraphics and custom settings (for example, fastIgnition enabled, shop disabled)
-        assets = Assets.new(stubLoveGraphics, { fastIgnition = true, shop = false })
+        -- Since Assets is a singleton, just assign it directly.
+        assets = Assets
     end)
 
     it("should create correct itemMapping", function()
-        -- Check that items with row and col are mapped
         assert.are.same({ row = 2, col = 20 }, assets.itemMapping["bomb"])
         assert.are.same({ row = 3, col = 1 }, assets.itemMapping["powerUp"])
-        -- Items without row/col (like "none") should not be in the mapping table.
         assert.is_nil(assets.itemMapping["none"])
     end)
 
     it("should return nil for getQuad with an invalid name", function()
-        local quad = assets:getQuad("nonexistent")
+        local quad = assets.getQuad("nonexistent")
         assert.is_nil(quad)
     end)
 
     it("should return a valid quad for a valid item", function()
-        local quad = assets:getQuad("bomb")
+        local quad = assets.getQuad("bomb")
         local expectedX = (20 - 1) * assets.TILE_SIZE  -- (20 - 1) * 16 = 304
         local expectedY = (2 - 1) * assets.TILE_SIZE   -- (2 - 1) * 16 = 16
         assert.are.same(expectedX, quad.x)
@@ -59,8 +60,8 @@ describe("Assets module", function()
     end)
 
     it("should cache quads in getCachedQuad", function()
-        local quad1 = assets:getCachedQuad("bomb")
-        local quad2 = assets:getCachedQuad("bomb")
+        local quad1 = assets.getCachedQuad("bomb")
+        local quad2 = assets.getCachedQuad("bomb")
         assert.are.equal(quad1, quad2)
     end)
 
@@ -68,7 +69,8 @@ describe("Assets module", function()
         local tileSize = 16
         local tilesPerRow = 4
         local tilesPerCol = 4
-        local quads = assets:loadTileQuads(tileSize, tilesPerRow, tilesPerCol)
+        -- Use dot notation here because loadTileQuads is not defined as a method.
+        local quads = assets.loadTileQuads(tileSize, tilesPerRow, tilesPerCol)
         assert.are.equal(tilesPerRow * tilesPerCol, #quads)
         local imgWidth, imgHeight = assets.objectSpriteSheet:getDimensions()
         for row = 0, tilesPerCol - 1 do
@@ -95,7 +97,8 @@ describe("Assets module", function()
         local spriteWidth = 32
         local spriteHeight = 32
         local gap = 2
-        local quad = Assets.getQuadWithOffset(frame, baseYOffset, rowFrameCount, spriteWidth, spriteHeight, gap, fakeSpriteSheet, stubLoveGraphics)
+        -- Call using dot notation
+        local quad = assets.getQuadWithOffset(frame, baseYOffset, rowFrameCount, spriteWidth, spriteHeight, gap, fakeSpriteSheet)
         local expectedRow = math.ceil(frame / rowFrameCount)  -- ceil(5/4) = 2
         local expectedColumn = (frame - 1) % rowFrameCount       -- (5 - 1) % 4 = 0
         local expectedX = expectedColumn * spriteWidth           -- 0 * 32 = 0
@@ -120,9 +123,9 @@ describe("Assets module", function()
         local spriteWidth = 20
         local spriteHeight = 20
         local gap = 1
-        local anim = Assets.generateAnimation(startFrame, endFrame, baseYOffset, rowFrameCount, spriteWidth, spriteHeight, gap, fakeSpriteSheet, stubLoveGraphics)
+        -- Call using dot notation
+        local anim = assets.generateAnimation(startFrame, endFrame, baseYOffset, rowFrameCount, spriteWidth, spriteHeight, gap, fakeSpriteSheet)
         assert.are.equal(3, #anim)
-        -- Check first frame values
         local expectedRow = math.ceil(startFrame / rowFrameCount)
         local expectedColumn = (startFrame - 1) % rowFrameCount
         local expectedX = expectedColumn * spriteWidth

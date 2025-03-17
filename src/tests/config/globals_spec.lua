@@ -8,8 +8,8 @@ describe("Global Configuration", function()
     end)
 
     it("should define correct virtual width and height", function()
-        assert.are.equal(640, VIRTUAL_WIDTH)
-        assert.are.equal(512, VIRTUAL_HEIGHT)
+        assert.are.equal(320, VIRTUAL_WIDTH)
+        assert.are.equal(256, VIRTUAL_HEIGHT)
     end)
 
     it("should correctly set ENABLE_MUSIC", function()
@@ -18,6 +18,10 @@ describe("Global Configuration", function()
 
     it("should correctly define debug mode", function()
         assert.is_boolean(DEBUG)
+    end)
+
+    it("should correctly define debug mode as off", function()
+        assert.are.equal(false, DEBUG)
     end)
 
     it("should correctly define tile size", function()

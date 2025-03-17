@@ -13,18 +13,18 @@ VIRTUAL_HEIGHT = 256
 ENABLE_MUSIC = false
 
 -- Debug mode toggle
-DEBUG = true
+DEBUG = false
 
 -- Tile size (useful for grid-based positioning in the game world)
 TILE_SIZE = 16
 
 -- Set the default logging level
-LOG_LEVEL = LOG.INFO
+LOG_LEVEL = LOG.ERROR
 
 -- Adjust log level based on debug mode
 -- If DEBUG mode is enabled, log more details for development
 if DEBUG then
     LOG.LOG_LEVEL = LOG.DEBUG
 else
-    LOG.LOG_LEVEL = LOG.INFO
+    LOG.LOG_LEVEL = LOG.ERROR
 end
