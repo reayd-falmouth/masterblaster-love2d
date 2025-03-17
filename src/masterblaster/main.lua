@@ -2,8 +2,8 @@ local Audio = require("system.audio")
 local Title = require("scenes.title")
 local currentState = Title
 
-GameSettings = require("config.settings")
-PlayerStats = require("core.stats")
+Settings = require("config.settings")
+
 
 -- Define players with unique control mappings
 KeyMaps = {
@@ -149,7 +149,7 @@ function love.keypressed(key)
 end
 
 function love.keyreleased(key)
-    log.debug("love.keyreleased: " .. key)
+    LOG.debug("love.keyreleased: " .. key)
     if currentState.keyreleased then
         currentState.keyreleased(key)
     end
@@ -164,6 +164,7 @@ function switchState(newState, musicFile)
 
     currentState = newState
     if currentState.load then
+        LOG.info("Going to title...")
         currentState.load()
     end
 

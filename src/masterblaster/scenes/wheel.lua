@@ -81,7 +81,8 @@ function WheelOfFortune.update(dt)
     if not isSpinning and not stateSwitched then
         postSpinTimer = postSpinTimer + dt
         if postSpinTimer >= 3 then
-            if GameSettings.shop == "ON" then
+            if Settings.shop then
+                LOG.info("Moving to shop")
                 switchState(Shop)
             else
                 switchState(Game)
@@ -93,9 +94,9 @@ end
 
 function WheelOfFortune.draw()
     -- Title at top, centered horizontally
-    love.graphics.setColor(UITheme.normalColor) -- e.g. Blue
+    love.graphics.setColor(UITheme.defaultTheme.primaryColor) -- e.g. Blue
     love.graphics.printf("WHEEL-O-FORTUNE", 0, 20, VIRTUAL_WIDTH, "center")
-    love.graphics.setColor(UITheme.fgColor)
+    love.graphics.setColor(UITheme.defaultTheme.foregroundColor)
 
     -- We'll space each player row by this many pixels
     local rowSpacing = 40
@@ -133,10 +134,10 @@ function WheelOfFortune.draw()
 
         -- Draw ">" next to the player if they're currently selected
         if i == arrowIndex then
-            love.graphics.setColor(UITheme.highlightColor)
+            love.graphics.setColor(UITheme.defaultTheme.secondaryColor)
             local pointerTextHeight = love.graphics.getFont():getHeight()
             love.graphics.print(">", pointerX, y + (SPRITE_HEIGHT - pointerTextHeight) / 2)
-            love.graphics.setColor(UITheme.fgColor)
+            love.graphics.setColor(UITheme.defaultTheme.foregroundColor)
         end
     end
 end

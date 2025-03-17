@@ -12,7 +12,7 @@ local winSound = nil
 function Overs.load()
     -- Find the winning player (the first with wins >= winsNeeded)
     for i, stats in ipairs(PlayerStats.players) do
-        if stats.wins >= GameSettings.winsNeeded then
+        if stats.wins >= Settings.winsNeeded then
             winningPlayerIndex = i
             break
         end
@@ -25,7 +25,7 @@ end
 
 function Overs.draw()
     love.graphics.setBackgroundColor(0, 0, 0)
-    love.graphics.setColor(UITheme.normalColor)
+    love.graphics.setColor(UITheme.defaultTheme.primaryColor)
     love.graphics.printf("YOU WON !!!", 0, 50, VIRTUAL_WIDTH, "center")
 
     -- Draw the winning player's sprite (using the idle frame)
@@ -44,7 +44,7 @@ function Overs.draw()
     love.graphics.setColor(UITheme.fgColor)
     love.graphics.draw(playerSpriteSheet, quad, spriteX, spriteY)
 
-    love.graphics.setColor(UITheme.normalColor)
+    love.graphics.setColor(UITheme.defaultTheme.primaryColor)
     love.graphics.printf("PRESS ANY BUTTON TO RESTART", 0, spriteY + SPRITE_HEIGHT + 20, VIRTUAL_WIDTH, "center")
 end
 

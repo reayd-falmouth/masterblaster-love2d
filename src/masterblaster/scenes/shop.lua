@@ -17,12 +17,12 @@ local TILE_SIZE = Assets.TILE_SIZE
 function Shop.drawObjectSprite(quad, x, y)
     love.graphics.setColor(UITheme.fgColor)  -- Draw with the foreground tint
     love.graphics.draw(Assets.objectSpriteSheet, quad, x, y)
-    love.graphics.setColor(UITheme.highlightColor)  -- Restore highlight tint
+    love.graphics.setColor(UITheme.defaultTheme.secondaryColor)  -- Restore highlight tint
 end
 
 -- This function reinitializes the shop each time the shop state is entered.
 function Shop.load()
-    if GameSettings.shop == "OFF" then
+    if Settings.shop then
         switchState(Game)
         return
     end
@@ -64,7 +64,7 @@ function Shop.draw()
 
     -- Isolate title drawing
     love.graphics.push()
-    love.graphics.setColor(UITheme.highlightColor)
+    love.graphics.setColor(UITheme.defaultTheme.secondaryColor)
     local title = "PLAYER " .. Shop.currentPlayerIndex .. " ENTERS SHOP"
     local titleWidth = love.graphics.getFont():getWidth(title)
     love.graphics.print(title, (screenWidth - titleWidth) / 2, 20)
@@ -72,7 +72,7 @@ function Shop.draw()
 
     -- Isolate MONEY label and coins
     love.graphics.push()
-    love.graphics.setColor(UITheme.highlightColor)
+    love.graphics.setColor(UITheme.defaultTheme.secondaryColor)
     local moneyLabelX, moneyLabelY = 50, 60
     love.graphics.print("MONEY", moneyLabelX, moneyLabelY)
     local coinSpacing = 16
@@ -83,7 +83,7 @@ function Shop.draw()
 
     -- Isolate headers drawing
     love.graphics.push()
-    love.graphics.setColor(UITheme.highlightColor)
+    love.graphics.setColor(UITheme.defaultTheme.secondaryColor)
     local headerY, extraX, prizeX = 110, 150, 320
     love.graphics.print("EXTRA", extraX, headerY)
     love.graphics.print("PRIZE", prizeX, headerY)

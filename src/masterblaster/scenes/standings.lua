@@ -2,11 +2,10 @@
 local Audio = require("system.audio")
 local Game = require("core.game")
 local Assets = require("core.assets")
-local PlayerStats = require("core.stats")  -- persistent stats module
 local GameOver = require("scenes.overs")
 local UITheme = require("core.theme")
 local Shop = require("scenes.shop")
-local WheelOFortune = require("scenes.wof")
+local WheelOFortune = require("scenes.wheel")
 
 local Standings = {}
 Standings.__index = Standings
@@ -53,7 +52,7 @@ function Standings.update(dt)
 
         local tournamentWon = false
         for i, stats in ipairs(PlayerStats.players) do
-            if stats.wins >= GameSettings.winsNeeded then
+            if stats.wins >= Settings.winsNeeded then
                 tournamentWon = true
                 break
             end
@@ -61,8 +60,8 @@ function Standings.update(dt)
 
         if tournamentWon then
             switchState(GameOver)
-        elseif GameSettings.shop == "ON" then
-            if GameSettings.gambling == "ON" then
+        elseif Settings.shop then
+            if Settings.gambling then
                 switchState(WheelOFortune)
             else
                 switchState(Shop)
@@ -74,12 +73,12 @@ function Standings.update(dt)
 end
 
 function Standings.draw()
-    love.graphics.setBackgroundColor(UITheme.bgColor)
-    love.graphics.setColor(UITheme.normalColor)
+    love.graphics.setBackgroundColor(UITheme.defaultTheme.backgroundColor)
+    love.graphics.setColor(UITheme.defaultTheme.primaryColor)
     love.graphics.printf("STANDINGS", 0, 20, VIRTUAL_WIDTH, "center")
 
     -- Reset to white before drawing sprites
-    love.graphics.setColor(UITheme.fgColor)
+    love.graphics.setColor(UITheme.defaultTheme.foregroundColor)
 
     local startY = 100         -- starting y position for the first row
     local rowSpacing = 40       -- vertical space between rows
@@ -102,7 +101,7 @@ function Standings.draw()
         for j = 1, stats.wins do
             -- Optional: use push/pop to isolate state changes
             love.graphics.push()
-            love.graphics.setColor(UITheme.fgColor)  -- ensure trophy is drawn with the correct tint
+            love.graphics.setColor(UITheme.defaultTheme.foregroundColor)  -- ensure trophy is drawn with the correct tint
             local trophyX = initialTrophyX + (j - 1) * trophySpacing
             love.graphics.draw(objectsSpriteSheet, trophyQuad, trophyX, y)
             love.graphics.pop()

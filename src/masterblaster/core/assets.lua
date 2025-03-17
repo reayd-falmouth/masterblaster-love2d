@@ -83,7 +83,7 @@ Assets.ITEM_DEFINITIONS = {
     shopItem = false
   },
   {
-    enabled = (GameSettings.fastIgnition == "ON"),
+    enabled = Settings.fastIgnition,
     key = "timebomb",
     name = "TIMEBOMB",
     cost = 2,
@@ -102,7 +102,7 @@ Assets.ITEM_DEFINITIONS = {
     shopItem = false
   },
   {
-    enabled = (GameSettings.shop == "ON"),
+    enabled = Settings.shop,
     key = "coin",
     name = "COIN",
     cost = 1,

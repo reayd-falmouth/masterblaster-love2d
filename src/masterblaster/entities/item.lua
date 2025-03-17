@@ -146,11 +146,11 @@ function Item:update(dt)
 
     local collision_type = nil
     if self.collider and self.collider:enter("Player") then
-        log.debug("Item: " .. self.key .. " and player collided")
+        LOG.debug("Item: " .. self.key .. " and player collided")
         collision_type = "Player"
     end
     if self.collider and self.collider:enter("PlayerGhost") then
-        log.debug("Item: " .. self.key .. " and player collided")
+        LOG.debug("Item: " .. self.key .. " and player collided")
         collision_type = "PlayerGhost"
     end
 
