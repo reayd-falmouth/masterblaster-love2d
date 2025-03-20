@@ -160,13 +160,18 @@ function Player:new(playerIndex, keyMap)
     local self = setmetatable({}, Player)
     self.index = playerIndex or 1
     self.keyMap = keyMap
+    -- Determine input type based on keyMap. (Assumes keyboard mappings use "up", gamepad mappings use "dpup".)
+    if self.keyMap.up == "up" then
+        self.inputType = "keyboard"
+    else
+        self.inputType = "gamepad"
+        -- Assume the controller for this player is at the same index.
+        self.controllerIndex = playerIndex
+    end
     self.stats = PlayerStats.players[self.index]
-
-    -- Calculate vertical offset for this player's row in the sheet.
+    -- (Rest of your initialization remains unchanged.)
     self.baseYOffset = (self.index - 1) * (3 * SPRITE_HEIGHT + 3)
     self.spriteSheet = spriteSheet
-
-    -- Animations table
     self.animations = {
         moveDown  = Assets.generateAnimation(1, 3,  self.baseYOffset, ROW_FRAME_COUNT,
                                              SPRITE_WIDTH, SPRITE_HEIGHT, GAP, spriteSheet),
@@ -180,11 +185,9 @@ function Player:new(playerIndex, keyMap)
                                              SPRITE_WIDTH, SPRITE_HEIGHT, GAP, spriteSheet),
         remote    = Assets.generateAnimation(22,24, self.baseYOffset, ROW_FRAME_COUNT,
                                              SPRITE_WIDTH, SPRITE_HEIGHT, GAP, spriteSheet),
-        ghost    = Assets.generateAnimation(25,30, self.baseYOffset, ROW_FRAME_COUNT,
+        ghost     = Assets.generateAnimation(25,30, self.baseYOffset, ROW_FRAME_COUNT,
                                              SPRITE_WIDTH, SPRITE_HEIGHT, GAP, spriteSheet)
     }
-
-    -- Default animation
     self.currentAnimation = self.animations.moveDown
     self.currentFrame = 1
     self.frameDuration = 0.1
@@ -193,21 +196,21 @@ function Player:new(playerIndex, keyMap)
     self.x = 100
     self.y = 100
 
-    -- Power-ups & flags
-    self.bombs = 1 + (self.stats.purchased["bomb"] or 0) -- the amount of bombs a player can drop
-    self.power = 0 + (self.stats.purchased["powerUp"] or 0) -- the additional blast distance of fireballs
-    self.superman = false -- can push single blocks and bombs
-    self.protection = false  -- protected against fireballs, sprite becomes solid white for limited time
+    -- Set power-ups and flags
+    self.bombs = 1 + (self.stats.purchased["bomb"] or 0)
+    self.power = 0 + (self.stats.purchased["powerUp"] or 0)
+    self.superman = false
+    self.protection = false
     self.protectionTimer = nil
-    self.phase = false  -- walk through walls, spirte becomes translucent, time limit
-    self.ghost = false  -- invisible and can walk through walls, special sprite animation
-    self.speed = 35 -- the speed the player moves at
-    self.timebomb = false -- changes so that the user only drops a single bomb, which is ignited upon releasing the spacebar
-    self.stopped = false -- temporarily causes the players movement to halt
-    self.money = 0 + (self.stats.money or 0) -- how much money (coins)  they have. this carries over matches.
-    self.remote = false -- allows the user to move bombs with the cursors, so when space is pressed movement is transffered to the bomb, player is stopped
+    self.phase = false
+    self.ghost = false
+    self.speed = 35
+    self.timebomb = false
+    self.stopped = false
+    self.money = 0 + (self.stats.money or 0)
+    self.remote = false
 
-    -- Physics collider
+    -- Create physics collider
     self.collider = Game.world:newCircleCollider(
         self.x - (COLLIDER_RADIUS / 2),
         self.y - COLLIDER_RADIUS,
@@ -218,37 +221,49 @@ function Player:new(playerIndex, keyMap)
     self.collider:setFriction(0)
     self.collider:setCollisionClass('Player')
 
-    -- Death / removal flags
     self.isDead = false
     self.toRemove = false
 
     return self
 end
 
+-- In player.lua, add this function to encapsulate input handling:
+function Player:handleMovementInput()
+    local up, down, left, right = false, false, false, false
+    if self.inputType == "gamepad" then
+        -- Look up the controller inputs for this player.
+        local input = ControllerInputs and ControllerInputs[self.controllerIndex]
+        if input then
+            -- Use thresholds for analog stick values.
+            up    = input.leftY < -0.2
+            down  = input.leftY > 0.2
+            left  = input.leftX < -0.2
+            right = input.leftX > 0.2
+        end
+    else
+        up    = love.keyboard.isDown(self.keyMap.up)
+        down  = love.keyboard.isDown(self.keyMap.down)
+        left  = love.keyboard.isDown(self.keyMap.left)
+        right = love.keyboard.isDown(self.keyMap.right)
+    end
+    return up, down, left, right
+end
+
+
 function Player:update(dt)
-    -- If we've already flagged for removal, skip updates entirely
     if self.toRemove then return end
 
-    -- Update the protection timer and flicker if it’s running
+    -- Update protection timer and flicker.
     if self.protectionTimer then
         self.protectionTimer = self.protectionTimer - dt
-
-        -- Increase the flicker accumulator by the elapsed time
         self.flickerAccum = (self.flickerAccum or 0) + dt
-
-        -- Compute progress (0 at start, 1 when timer expires)
-        local totalDuration = 3  -- seconds
+        local totalDuration = 3
         local progress = (totalDuration - self.protectionTimer) / totalDuration
-        -- Linearly interpolate flicker period from fast (0.1 sec) to slow (0.5 sec)
         self.flickerPeriod = 0.1 + progress * (0.5 - 0.1)
-
-        -- Toggle the flicker state if enough time has passed
         if self.flickerAccum >= self.flickerPeriod then
             self.flickerState = not self.flickerState
             self.flickerAccum = self.flickerAccum - self.flickerPeriod
         end
-
-        -- Once the timer expires, remove protection
         if self.protectionTimer <= 0 then
             self.protection = false
             self.protectionTimer = nil
@@ -257,7 +272,7 @@ function Player:update(dt)
         end
     end
 
-    -- Update the stopped timer if active.
+    -- Update stopped timer.
     if self.stoppedTimer then
         self.stoppedTimer = self.stoppedTimer - dt
         if self.stoppedTimer <= 0 then
@@ -266,112 +281,82 @@ function Player:update(dt)
         end
     end
 
-    -- Update the ghost timer if active.
+    -- Update ghost timer.
     if self.ghostTimer then
         self.ghostTimer = self.ghostTimer - dt
         if self.ghostTimer <= 0 then
             self.ghost = false
             self.ghostTimer = nil
             self.collider:setCollisionClass('Player')
-            -- Optionally, reset to a default or re-run directional checks:
-            if love.keyboard.isDown(self.keyMap.up) then
+            -- Use our unified input handler when ghost expires.
+            local upPressed, downPressed, leftPressed, rightPressed = self:handleMovementInput()
+            if upPressed then
                 self.currentAnimation = self.animations.moveUp
-            elseif love.keyboard.isDown(self.keyMap.down) then
+            elseif downPressed then
                 self.currentAnimation = self.animations.moveDown
-            elseif love.keyboard.isDown(self.keyMap.left) then
+            elseif leftPressed then
                 self.currentAnimation = self.animations.moveLeft
-            elseif love.keyboard.isDown(self.keyMap.right) then
+            elseif rightPressed then
                 self.currentAnimation = self.animations.moveRight
             else
-                self.currentAnimation = self.animations.moveDown  -- default if no input
+                self.currentAnimation = self.animations.moveDown
             end
             self.currentFrame = 1
         end
     end
 
-    -- Check collision with a Fireball if collider still exists
-    if self.collider and self.collider:enter("Fireball") then
-        if self.protection then
-            -- Protection is already active.
-            -- If the timer hasn’t started yet, activate it.
-            if not self.protectionTimer then
-                self:activateProtectionTimer()
-            end
-        else
-            self:die()
-        end
-    end
+    -- Get movement inputs.
+    local upPressed, downPressed, leftPressed, rightPressed = self:handleMovementInput()
 
-    -- If the player is dead, just run the death animation
-    if self.isDead then
-        self.animationTimer = self.animationTimer + dt
-        if self.animationTimer >= self.frameDuration then
-            self.animationTimer = self.animationTimer - self.frameDuration
-            self.currentFrame = self.currentFrame + 1
-
-            -- If the death animation finishes, mark the player for removal
-            if self.currentFrame > #self.animations.die then
-                self.toRemove = true
-            end
-        end
-        return
-    end
-
-    -- Movement logic: compute velocity based on input.
     local vx, vy = 0, 0
     local moving = false
 
-    if love.keyboard.isDown(self.keyMap.up) then
+    if upPressed then
         vy = vy - self.speed
         moving = true
-    elseif love.keyboard.isDown(self.keyMap.down) then
+    elseif downPressed then
         vy = vy + self.speed
         moving = true
     end
-
-    if love.keyboard.isDown(self.keyMap.left) then
+    if leftPressed then
         vx = vx - self.speed
         moving = true
-    elseif love.keyboard.isDown(self.keyMap.right) then
+    elseif rightPressed then
         vx = vx + self.speed
         moving = true
     end
 
-    -- If the player is stopped, override any velocity to 0
     if self.stopped then
         vx, vy = 0, 0
     end
 
-    -- Apply velocity and update logical (x, y) from collider’s position
     self.collider:setLinearVelocity(vx, vy)
     local cx, cy = self.collider:getPosition()
     self.x = cx
     self.y = cy + COLLIDER_RADIUS
 
-    -- Determine new animation based on state and input.
+    -- Determine appropriate animation.
     local newAnimation = nil
     if self.ghost then
         newAnimation = self.animations.ghost
     elseif self.remote and self.stopped then
         newAnimation = self.animations.remote
-    elseif love.keyboard.isDown(self.keyMap.up) then
+    elseif upPressed then
         newAnimation = self.animations.moveUp
-    elseif love.keyboard.isDown(self.keyMap.down) then
+    elseif downPressed then
         newAnimation = self.animations.moveDown
-    elseif love.keyboard.isDown(self.keyMap.left) then
+    elseif leftPressed then
         newAnimation = self.animations.moveLeft
-    elseif love.keyboard.isDown(self.keyMap.right) then
+    elseif rightPressed then
         newAnimation = self.animations.moveRight
     end
 
-    -- If the animation has changed, reset the frame counter.
     if newAnimation and newAnimation ~= self.currentAnimation then
         self.currentAnimation = newAnimation
         self.currentFrame = 1
         self.animationTimer = 0
     end
 
-    -- Advance animation if moving or in ghost state
     if moving or self.ghost then
         self.animationTimer = self.animationTimer + dt
         if self.animationTimer >= self.frameDuration then
@@ -383,6 +368,7 @@ function Player:update(dt)
         self.animationTimer = 0
     end
 end
+
 
 function Player:draw(offsetX, offsetY)
     offsetX = offsetX or 0

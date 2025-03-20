@@ -56,9 +56,33 @@ local function spawnPlayers()
     log.debug("  Getting spawn positions...")
     local spawnPositions = Spawns:getSpawnPositions(numPlayers, Game.map)
 
+    -- Ensure KeyMaps is defined.
+    if not KeyMaps then
+        local joystickCount = #love.joystick.getJoysticks()
+        if joystickCount < 1 then
+            -- No controller: only keyboard.
+            KeyMaps = {
+                { name = "Player 1 (Keyboard)", keys = { up = "up", down = "down", left = "left", right = "right", bomb = "space" } }
+            }
+        elseif joystickCount == 1 then
+            -- One controller: add keyboard as player 1 and controller as player 2.
+            KeyMaps = {
+                { name = "Player 1 (Keyboard)", keys = { up = "up", down = "down", left = "left", right = "right", bomb = "space" } },
+                { name = "Player 2 (Controller)", keys = { up = "dpup", down = "dpdown", left = "dpleft", right = "dpright", bomb = "a" } }
+            }
+        else
+            -- More than one controller: assign each controller its own mapping.
+            KeyMaps = {}
+            for i = 1, joystickCount do
+                KeyMaps[i] = { name = "Player " .. i, keys = { up = "dpup", down = "dpdown", left = "dpleft", right = "dpright", bomb = "a" } }
+            end
+        end
+    end
+
     log.debug("  Setting positions..")
     Game.players = {}
     for i = 1, numPlayers do
+        -- Use the mapping from KeyMaps for this player.
         local p = Player:new(i, KeyMaps[i].keys)
         p.x = spawnPositions[i].x
         p.y = spawnPositions[i].y
@@ -68,6 +92,7 @@ local function spawnPlayers()
 
     log.debug("SPAWNING COMPLETE")
 end
+
 
 local function dumpObjectInfo(obj)
     print("=== Dumping object info ===")

@@ -7,18 +7,6 @@ local currentState = Title
 GameSettings = require("config.settings")
 PlayerStats = require("core.stats")
 
--- Controller manager instance
-local controllerManager
-
--- Define players with unique control mappings
-KeyMaps = {
-    { name = "Player 1", keys = { up = "up", down = "down", left = "left", right = "right", bomb = "space" } },
-    { name = "Player 2", keys = { up = "w", down = "s", left = "a", right = "d", bomb = "lctrl" } },
-    { name = "Player 3", keys = { up = "i", down = "k", left = "j", right = "l", bomb = "rctrl" } },
-    { name = "Player 4", keys = { up = "t", down = "g", left = "f", right = "h", bomb = "lshift" } },
-    { name = "Player 5", keys = { up = "y", down = "h", left = "g", right = "j", bomb = "rshift" } },
-}
-
 -- Preset resolutions to cycle through (in ascending order)
 local resolutions = {
     { width = 640, height = 512 },
@@ -53,7 +41,6 @@ function love.load()
     end)
     if not status then
         print("[WARNING] Joystick mappings failed to load:", err)
-        -- Optionally, you could set a flag to notify the user later in-game
     end
 
     -- Initialize joysticks already connected
@@ -88,30 +75,32 @@ function love.update(dt)
         currentState.update(dt)
     end
 
-    -- Get joystick inputs
-    local inputs = controllerManager:getPlayerInputs()
+    -- Update global ControllerInputs with the latest inputs.
+    ControllerInputs = controllerManager:getPlayerInputs()
 
-    -- Map joystick inputs to your player logic
-    for _, input in ipairs(inputs) do
-        local playerIndex = input.player
-        local playerControls = KeyMaps[player]
+    -- If the current state is the menu and it provides a controller update function, call it.
+    if currentState.menuControllerUpdate then
+        currentState.menuControllerUpdate(dt, ControllerInputs)
+    end
 
-        -- Example logic: You need to define how your player objects move
-        -- Replace this with your actual player movement/actions:
+    -- Process each input for in-game actions.
+    for _, input in ipairs(ControllerInputs) do
+        local player = input.player
+        -- Replace these prints with your actual player movement/actions.
         if input.leftX < -0.2 then
-            print(KeyMaps[input.player].name .. " moves left")
+            print("Player " .. player .. " moves left")
         elseif input.leftX > 0.2 then
-            print(KeyMaps[input.player].name .. " moves right")
+            print("Player " .. player .. " moves right")
         end
 
         if input.leftY < -0.2 then
-            print(KeyMaps[input.player].name .. " moves up")
+            print("Player " .. player .. " moves up")
         elseif input.leftY > 0.2 then
-            print(KeyMaps[input.player].name .. " moves down")
+            print("Player " .. player .. " moves down")
         end
 
         if input.action then
-            print(KeyMaps[input.player].name .. " pressed action/bomb button")
+            print("Player " .. player .. " pressed action/bomb button")
         end
     end
 end
@@ -135,6 +124,25 @@ end
 function love.joystickremoved(joystick)
     controllerManager:removeJoystick(joystick)
     print("[Joystick Removed]:", joystick:getName())
+end
+
+-- New: Map player 1 controller input for menu navigation.
+function love.gamepadpressed(joystick, button)
+    if currentState.gamepadpressed then
+        currentState.gamepadpressed(joystick, button)
+    elseif controllerManager.joysticks[1] and joystick == controllerManager.joysticks[1].joystick then
+        local mapping = {
+            dpadup = "up",
+            dpaddown = "down",
+            dpadleft = "left",
+            dpadright = "right",
+            a = "return"
+        }
+        local key = mapping[button]
+        if key and currentState.keypressed then
+            currentState.keypressed(key)
+        end
+    end
 end
 
 function love.keypressed(key)

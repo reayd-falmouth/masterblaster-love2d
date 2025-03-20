@@ -26,6 +26,14 @@ local containerX = 0 -- Will be calculated in draw() to center container
 -- Font variables (set in load)
 local imageFont
 
+-- Helper function to check for an element in a table
+local function tableContains(tbl, element)
+    for _, value in ipairs(tbl) do
+        if value == element then return true end
+    end
+    return false
+end
+
 function MainMenu.load()
     -- Load custom fonts from your font module
     Font.load()
@@ -35,6 +43,44 @@ function MainMenu.load()
 
     -- Set background color
     love.graphics.setBackgroundColor(UITheme.bgColor)
+
+    -- Update the PLAYERS menu item based on attached controllers.
+    -- Determine the actual number of attached joysticks.
+    local joystickCount = #love.joystick.getJoysticks()
+    local basePlayers = 0
+    if joystickCount == 0 then
+        -- No controller: keyboard only.
+        basePlayers = 1
+    elseif joystickCount == 1 then
+        -- One controller: add keyboard as a player.
+        basePlayers = 2
+    else
+        -- More than one controller: use controllers only.
+        basePlayers = joystickCount
+    end
+    -- Limit to a maximum of 5 players.
+    basePlayers = math.min(basePlayers, 5)
+
+    -- Rebuild the choices for PLAYERS.
+    for i, item in ipairs(menuItems) do
+        if item.key == "players" then
+            local newChoices = {}
+            if basePlayers == 1 then
+                newChoices = {1}
+            else
+                -- For multiple players, offer choices from 2 up to basePlayers.
+                for j = 2, basePlayers do
+                    table.insert(newChoices, j)
+                end
+            end
+            item.choices = newChoices
+            -- Ensure the current value is valid; if not, default to the first available.
+            if not tableContains(newChoices, item.value) then
+                item.value = newChoices[1]
+                GameSettings.players = item.value
+            end
+        end
+    end
 end
 
 function MainMenu.update(dt)
@@ -74,20 +120,56 @@ function MainMenu.draw()
     for i, item in ipairs(menuItems) do
         local y = menuStartY + (i - 1) * lineSpacing
 
-        -- Draw the marker '>' in purple for the selected item
+        -- Draw the marker '>' in highlight color for the selected item
         if i == selectedIndex then
             love.graphics.setColor(UITheme.highlightColor)
-            love.graphics.print(">", containerX - (10 * fontScale), y, 0, fontScale, fontScale) -- Adjust for balance
+            love.graphics.print(">", containerX - (10 * fontScale), y, 0, fontScale, fontScale)
         end
 
-        -- Draw the menu text in blue (normal color)
+        -- Draw the menu text in normal color
         love.graphics.setColor(UITheme.normalColor)
-
-        -- Format label and value
         local formattedText = string.format("  %-12s : %-3s", item.label, tostring(item.value))
-
-        -- Print the formatted text
         love.graphics.print(formattedText, containerX, y, 0, fontScale, fontScale)
+    end
+end
+
+-- This function polls the first controller's inputs and simulates key presses.
+-- Debounce flags (_upPressed, _downPressed, etc.) prevent repeated calls for one press.
+function MainMenu.menuControllerUpdate(dt, inputs)
+    for _, input in ipairs(inputs) do
+        if input.player == 1 then
+            -- Action (e.g., "return" button)
+            if input.action and not MainMenu._actionPressed then
+                MainMenu._actionPressed = true
+                MainMenu.keypressed("return")
+            elseif not input.action then
+                MainMenu._actionPressed = false
+            end
+
+            -- Horizontal movement (simulate left/right)
+            if input.leftX < -0.2 and not MainMenu._leftPressed then
+                MainMenu._leftPressed = true
+                MainMenu.keypressed("left")
+            elseif input.leftX > 0.2 and not MainMenu._rightPressed then
+                MainMenu._rightPressed = true
+                MainMenu.keypressed("right")
+            elseif math.abs(input.leftX) < 0.2 then
+                MainMenu._leftPressed = false
+                MainMenu._rightPressed = false
+            end
+
+            -- Vertical movement (simulate up/down)
+            if input.leftY < -0.2 and not MainMenu._upPressed then
+                MainMenu._upPressed = true
+                MainMenu.keypressed("up")
+            elseif input.leftY > 0.2 and not MainMenu._downPressed then
+                MainMenu._downPressed = true
+                MainMenu.keypressed("down")
+            elseif math.abs(input.leftY) < 0.2 then
+                MainMenu._upPressed = false
+                MainMenu._downPressed = false
+            end
+        end
     end
 end
 

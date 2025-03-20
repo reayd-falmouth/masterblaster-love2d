@@ -15,25 +15,24 @@ function ControllerManager:loadMappings()
     if mappingsData then
         love.joystick.loadGamepadMappings(mappingsData)
     else
-        print("Warning: Mapping file not found, continuing without custom mappings.")
+        print("[INFO] No mapping file found. Using default mappings.")
     end
 end
 
 function ControllerManager:addJoystick(joystick)
     local playerNumber = #self.joysticks + 1
-    table.insert(self.joysticks, {
+    self.joysticks[playerNumber] = {
         joystick = joystick,
         player = playerNumber
-    })
-    print("Assigned joystick '" .. joystick:getName() .. "' to player " .. playerNumber)
+    }
+    print(string.format("[INFO] Joystick '%s' assigned to Player %d.", joystick:getName(), playerNumber))
 end
-
 
 function ControllerManager:removeJoystick(joystick)
     for i, entry in ipairs(self.joysticks) do
         if entry.joystick == joystick then
             table.remove(self.joysticks, i)
-            print("Removed joystick from player", entry.player)
+            print(string.format("[INFO] Joystick removed from Player %d.", entry.player))
             break
         end
     end
