@@ -58,7 +58,8 @@ local function spawnPlayers()
 
     -- Ensure KeyMaps is defined.
     if not KeyMaps then
-        local joystickCount = #love.joystick.getJoysticks()
+        local joysticks = love.joystick.getJoysticks()
+        local joystickCount = #joysticks
         if joystickCount < 1 then
             -- No controller: only keyboard.
             KeyMaps = {
@@ -81,9 +82,23 @@ local function spawnPlayers()
 
     log.debug("  Setting positions..")
     Game.players = {}
+    local joysticks = love.joystick.getJoysticks()
+    local joystickCount = #joysticks
+
     for i = 1, numPlayers do
-        -- Use the mapping from KeyMaps for this player.
-        local p = Player:new(i, KeyMaps[i].keys)
+        local controllerGUID = nil
+        -- Determine if this player's mapping is for a gamepad.
+        if KeyMaps[i].keys.up == "dpup" then
+            -- If there's one joystick and we're expecting a controller for player 2:
+            if joystickCount == 1 and i == 2 then
+                controllerGUID = joysticks[1]:getGUID()
+            elseif joystickCount > 1 then
+                -- For multiple controllers, assume player i uses the i-th joystick.
+                controllerGUID = joysticks[i] and joysticks[i]:getGUID() or nil
+            end
+        end
+
+        local p = Player:new(i, KeyMaps[i].keys, controllerGUID)
         p.x = spawnPositions[i].x
         p.y = spawnPositions[i].y
         p.collider:setPosition(p.x, p.y)
@@ -91,60 +106,6 @@ local function spawnPlayers()
     end
 
     log.debug("SPAWNING COMPLETE")
-end
-
-
-local function dumpObjectInfo(obj)
-    print("=== Dumping object info ===")
-    print("Type:", type(obj))
-    if type(obj) == "table" then
-        print("Table keys:")
-        for k, v in pairs(obj) do
-            print("  " .. tostring(k) .. ":", type(v))
-        end
-    else
-        local mt = debug.getmetatable(obj)
-        if mt then
-            print("Metatable keys:")
-            for k, v in pairs(mt) do
-                print("  " .. tostring(k) .. ":", type(v))
-            end
-        else
-            print("No metatable available.")
-        end
-    end
-    print("=== End dump ===")
-end
-
-local function endContact(a, b, coll)
-    -- Optional: Code to run when two colliders separate.
-end
-
-local function preSolve(a, b, coll)
-    -- Optional: Code to run before the physics solver processes the collision.
-end
-
-local function postSolve(a, b, coll)
-    -- Optional: Code to run after the collision is resolved.
-end
-
-local function beginContact(a, b, coll)
-    local objA = a:getObject()
-    local objB = b:getObject()
-
-    -- Check if a fireball is colliding with a player
-    if a:getCollisionClass() == "Fireball" and b:getCollisionClass() == "Player" then
-        if objB and objB.protection then
-            -- Ignore collision if player is in yingyang mode
-            return false
-        end
-    elseif a:getCollisionClass() == "Player" and b:getCollisionClass() == "Fireball" then
-        if objA and objA.protection then
-            -- Ignore collision if player is in yingyang mode
-            return false
-        end
-    end
-    -- Process other collisions normally
 end
 
 function Game.keypressed(key)

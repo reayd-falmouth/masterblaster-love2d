@@ -1,11 +1,19 @@
 -- main.lua
-local Audio = require("system.audio")
-local Title = require("scenes.title")
-local ControllerManager = require("core.controller")
-local currentState = Title
-
+Audio = require("system.audio")
+Audio.load()
+ControllerManager = require("core.controller")
 GameSettings = require("config.settings")
+Game = require("core.game")
+
 PlayerStats = require("core.stats")
+
+-- scenes
+Title = require("scenes.title")
+Credits = require("scenes.credits")
+Shop = require("scenes.shop")
+
+
+currentState = Title
 
 -- Preset resolutions to cycle through (in ascending order)
 local resolutions = {
@@ -78,29 +86,13 @@ function love.update(dt)
     -- Update global ControllerInputs with the latest inputs.
     ControllerInputs = controllerManager:getPlayerInputs()
 
-    -- If the current state is the menu and it provides a controller update function, call it.
-    if currentState.menuControllerUpdate then
-        currentState.menuControllerUpdate(dt, ControllerInputs)
-    end
-
     -- Process each input for in-game actions.
     for _, input in ipairs(ControllerInputs) do
-        local player = input.player
-        -- Replace these prints with your actual player movement/actions.
-        if input.leftX < -0.2 then
-            print("Player " .. player .. " moves left")
-        elseif input.leftX > 0.2 then
-            print("Player " .. player .. " moves right")
-        end
-
-        if input.leftY < -0.2 then
-            print("Player " .. player .. " moves up")
-        elseif input.leftY > 0.2 then
-            print("Player " .. player .. " moves down")
-        end
-
-        if input.action then
-            print("Player " .. player .. " pressed action/bomb button")
+        if Game.players then
+            local player = Game.players[input.playerGUID]  -- Use the GUID as the key.
+            if player then
+                player:handleControllerInput(input)
+            end
         end
     end
 end
@@ -122,7 +114,7 @@ function love.joystickadded(joystick)
 end
 
 function love.joystickremoved(joystick)
-    controllerManager:removeJoystick(joystick)
+    --controllerManager:removeJoystick(joystick)
     print("[Joystick Removed]:", joystick:getName())
 end
 
@@ -130,18 +122,6 @@ end
 function love.gamepadpressed(joystick, button)
     if currentState.gamepadpressed then
         currentState.gamepadpressed(joystick, button)
-    elseif controllerManager.joysticks[1] and joystick == controllerManager.joysticks[1].joystick then
-        local mapping = {
-            dpadup = "up",
-            dpaddown = "down",
-            dpadleft = "left",
-            dpadright = "right",
-            a = "return"
-        }
-        local key = mapping[button]
-        if key and currentState.keypressed then
-            currentState.keypressed(key)
-        end
     end
 end
 

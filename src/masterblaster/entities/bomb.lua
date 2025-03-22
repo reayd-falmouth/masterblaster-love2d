@@ -1,5 +1,4 @@
 local Assets = require("core.assets")
-local Audio = require("system.audio")
 local Fireball = require("entities.fireball")
 local Helpers = require("utils.helpers")
 local Bomb = {}

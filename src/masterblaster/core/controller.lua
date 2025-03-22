@@ -19,12 +19,16 @@ function ControllerManager:loadMappings()
     end
 end
 
+-- In your ControllerManager module:
 function ControllerManager:addJoystick(joystick)
-    local playerNumber = #self.joysticks + 1
-    self.joysticks[playerNumber] = {
-        joystick = joystick,
-        player = playerNumber
-    }
+    local guid = joystick:getGUID()
+    if self.joysticks[guid] then
+        print("Joystick with GUID " .. guid .. " is already mapped.")
+        return  -- Avoid mapping the same joystick twice.
+    end
+    self.joysticks[guid] = joystick
+    -- Optionally, you can now assign this joystick to a specific player.
+    -- For example, you might maintain a table that maps GUIDs to player objects.
     print(string.format("[INFO] Joystick '%s' assigned to Player %d.", joystick:getName(), playerNumber))
 end
 
@@ -36,7 +40,6 @@ function ControllerManager:removeJoystick(joystick)
             break
         end
     end
-    self:reassignPlayers()
 end
 
 function ControllerManager:reassignPlayers()

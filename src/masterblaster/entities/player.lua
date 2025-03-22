@@ -25,7 +25,6 @@ function Player:getGridPosition()
     return row, col
 end
 
-
 -- Call this to start the 3-second countdown when hit during protection.
 function Player:activateProtectionTimer()
     self.protectionTimer = 3
@@ -70,11 +69,6 @@ function Player:applyItemEffect(item)
     end
 end
 
-function Player:keypressed(key)
-    if self.keyMap and key == self.keyMap.bomb then
-        self:dropBomb()
-    end
-end
 
 function Player:keyreleased(key)
     log.debug("Player:keyreleased received: " .. key)
@@ -134,7 +128,6 @@ function Player:dropBomb()
     end
 end
 
-
 -- Called once when the player dies
 function Player:die()
     -- Prevent re-running if already dead
@@ -156,20 +149,13 @@ function Player:die()
     end
 end
 
-function Player:new(playerIndex, keyMap)
+function Player:new(playerIndex, keyMap, assignedControllerGUID)
     local self = setmetatable({}, Player)
     self.index = playerIndex or 1
     self.keyMap = keyMap
-    -- Determine input type based on keyMap. (Assumes keyboard mappings use "up", gamepad mappings use "dpup".)
-    if self.keyMap.up == "up" then
-        self.inputType = "keyboard"
-    else
-        self.inputType = "gamepad"
-        -- Assume the controller for this player is at the same index.
-        self.controllerIndex = playerIndex
-    end
+    self.inputType = "gamepad"
+    self.controllerIndex = assignedControllerGUID
     self.stats = PlayerStats.players[self.index]
-    -- (Rest of your initialization remains unchanged.)
     self.baseYOffset = (self.index - 1) * (3 * SPRITE_HEIGHT + 3)
     self.spriteSheet = spriteSheet
     self.animations = {
@@ -249,6 +235,12 @@ function Player:handleMovementInput()
     return up, down, left, right
 end
 
+function Player:handleControllerInput(input)
+    -- Check for the action/bomb input and drop a bomb.
+    if input.action then
+        self:dropBomb()
+    end
+end
 
 function Player:update(dt)
     if self.toRemove then return end
