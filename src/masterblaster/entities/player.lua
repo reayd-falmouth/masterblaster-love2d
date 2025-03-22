@@ -70,31 +70,6 @@ function Player:applyItemEffect(item)
     end
 end
 
-
---function Player:keyreleased(key)
---    LOG.debug("Player:keyreleased received: " .. key)
---    if self.keyMap and key == self.keyMap.bomb and self.timebomb then
---        for _, bomb in ipairs(Game.bombs) do
---            if bomb.owner == self and bomb.waiting then
---                bomb.waiting = false
---                LOG.debug("Bomb timer resumed")
---            end
---        end
---    end
---    if self.keyMap and key == self.keyMap.bomb and self.remote and self.stopped then
---        self.stopped = false
---    end
---end
---
---function Player:keypressed(key)
---    if self.isDead then
---        return
---    end
---    if self.keyMap and key == self.keyMap.bomb then
---        self:dropBomb()
---    end
---end
-
 function Player:dropBomb()
     -- Prevent dropping bombs if the player is dead or collider is missing
     if self.isDead or not self.collider then
@@ -229,12 +204,44 @@ function Player:handleMovementInput()
     return up, down, left, right
 end
 
+--function Player:keyreleased(key)
+--    LOG.debug("Player:keyreleased received: " .. key)
+--    if self.keyMap and key == self.keyMap.bomb and self.timebomb then
+--        for _, bomb in ipairs(Game.bombs) do
+--            if bomb.owner == self and bomb.waiting then
+--                bomb.waiting = false
+--                LOG.debug("Bomb timer resumed")
+--            end
+--        end
+--    end
+--    if self.keyMap and key == self.keyMap.bomb and self.remote and self.stopped then
+--        self.stopped = false
+--    end
+--end
+
 function Player:handleControllerInput(input)
-    -- Check for the action/bomb input and drop a bomb.
-    if input.action then
+     if self.isDead then
+        return
+    end
+
+    -- Bomb drop button pressed
+    if input.actionPressed then
         self:dropBomb()
     end
+
+    -- Bomb drop button released
+    if input.actionReleased and self.timebomb then
+        for _, bomb in ipairs(Game.bombs) do
+            if bomb.owner == self and bomb.waiting then
+                bomb.waiting = false
+                LOG.debug("Timed bomb released: countdown started")
+            end
+        end
+        self.stopped = false
+    end
+
 end
+
 
 function Player:update(dt)
     if self.toRemove then return end
