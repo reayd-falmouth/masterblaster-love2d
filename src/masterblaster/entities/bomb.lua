@@ -141,48 +141,51 @@ function Bomb:update(dt)
         local vx, vy = 0, 0
         local moving = false
 
-        if love.keyboard.isDown(self.owner.keyMap.up) then
-            if self.currentAnimation ~= self.animations.moveUp then
-                self.currentAnimation = self.animations.moveUp
-                self.currentFrame = 1
-                self.animationTimer = 0
+        local input = ControllerInputs[self.owner.controllerIndex]
+        if input then
+            if input.leftY < -0.2 then
+                if self.currentAnimation ~= self.animations.moveUp then
+                    self.currentAnimation = self.animations.moveUp
+                    self.currentFrame = 1
+                    self.animationTimer = 0
+                end
+                vy = vy - self.speed
+                moving = true
+            elseif input.leftY > 0.2 then
+                if self.currentAnimation ~= self.animations.moveDown then
+                    self.currentAnimation = self.animations.moveDown
+                    self.currentFrame = 1
+                    self.animationTimer = 0
+                end
+                vy = vy + self.speed
+                moving = true
+            elseif input.leftX < -0.2 then
+                if self.currentAnimation ~= self.animations.moveLeft then
+                    self.currentAnimation = self.animations.moveLeft
+                    self.currentFrame = 1
+                    self.animationTimer = 0
+                end
+                vx = vx - self.speed
+                moving = true
+            elseif input.leftX > 0.2 then
+                if self.currentAnimation ~= self.animations.moveRight then
+                    self.currentAnimation = self.animations.moveRight
+                    self.currentFrame = 1
+                    self.animationTimer = 0
+                end
+                vx = vx + self.speed
+                moving = true
+            else
+                if self.currentAnimation ~= self.animations.idleAnimation then
+                    self.currentAnimation = self.animations.idleAnimation
+                    self.currentFrame = 1
+                    self.animationTimer = 0
+                end
             end
-            vy = vy - self.speed
-            moving = true
+        end
+
+        if moving then
             self.remoteControlledSound:play()
-        elseif love.keyboard.isDown(self.owner.keyMap.down) then
-            if self.currentAnimation ~= self.animations.moveDown then
-                self.currentAnimation = self.animations.moveDown
-                self.currentFrame = 1
-                self.animationTimer = 0
-            end
-            vy = vy + self.speed
-            moving = true
-            self.remoteControlledSound:play()
-        elseif love.keyboard.isDown(self.owner.keyMap.left) then
-            if self.currentAnimation ~= self.animations.moveLeft then
-                self.currentAnimation = self.animations.moveLeft
-                self.currentFrame = 1
-                self.animationTimer = 0
-            end
-            vx = vx - self.speed
-            moving = true
-            self.remoteControlledSound:play()
-        elseif love.keyboard.isDown(self.owner.keyMap.right) then
-            if self.currentAnimation ~= self.animations.moveRight then
-                self.currentAnimation = self.animations.moveRight
-                self.currentFrame = 1
-                self.animationTimer = 0
-            end
-            vx = vx + self.speed
-            moving = true
-            self.remoteControlledSound:play()
-        else
-            if self.currentAnimation ~= self.animations.idleAnimation then
-                self.currentAnimation = self.animations.idleAnimation
-                self.currentFrame = 1
-                self.animationTimer = 0
-            end
         end
 
         -- Apply velocity to the collider if it exists.

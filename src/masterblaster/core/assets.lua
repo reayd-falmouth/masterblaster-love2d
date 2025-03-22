@@ -52,7 +52,7 @@ Assets.ITEM_DEFINITIONS = {
     name = "GHOST",
     cost = 3,
     row = 3, col = 5,
-    weight = 70,
+    weight = 2,
     duration = 3,
     shopItem = true
   },
@@ -117,7 +117,7 @@ Assets.ITEM_DEFINITIONS = {
     name = "CONTROLLER",
     cost = 4,
     row = 3, col = 13,
-    weight = 3,
+    weight = 70,
     shopItem = true
   },
   {
