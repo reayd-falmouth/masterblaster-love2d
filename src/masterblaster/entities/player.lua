@@ -70,29 +70,29 @@ function Player:applyItemEffect(item)
 end
 
 
-function Player:keyreleased(key)
-    LOG.debug("Player:keyreleased received: " .. key)
-    if self.keyMap and key == self.keyMap.bomb and self.timebomb then
-        for _, bomb in ipairs(Game.bombs) do
-            if bomb.owner == self and bomb.waiting then
-                bomb.waiting = false
-                LOG.debug("Bomb timer resumed")
-            end
-        end
-    end
-    if self.keyMap and key == self.keyMap.bomb and self.remote and self.stopped then
-        self.stopped = false
-    end
-end
-
-function Player:keypressed(key)
-    if self.isDead then
-        return
-    end
-    if self.keyMap and key == self.keyMap.bomb then
-        self:dropBomb()
-    end
-end
+--function Player:keyreleased(key)
+--    LOG.debug("Player:keyreleased received: " .. key)
+--    if self.keyMap and key == self.keyMap.bomb and self.timebomb then
+--        for _, bomb in ipairs(Game.bombs) do
+--            if bomb.owner == self and bomb.waiting then
+--                bomb.waiting = false
+--                LOG.debug("Bomb timer resumed")
+--            end
+--        end
+--    end
+--    if self.keyMap and key == self.keyMap.bomb and self.remote and self.stopped then
+--        self.stopped = false
+--    end
+--end
+--
+--function Player:keypressed(key)
+--    if self.isDead then
+--        return
+--    end
+--    if self.keyMap and key == self.keyMap.bomb then
+--        self:dropBomb()
+--    end
+--end
 
 function Player:dropBomb()
     -- Prevent dropping bombs if the player is dead or collider is missing
@@ -288,6 +288,34 @@ function Player:update(dt)
             end
             self.currentFrame = 1
         end
+    end
+
+    -- Check collision with a Fireball if collider still exists
+    if self.collider and self.collider:enter("Fireball") then
+        if self.protection then
+            -- Protection is already active.
+            -- If the timer hasn’t started yet, activate it.
+            if not self.protectionTimer then
+                self:activateProtectionTimer()
+            end
+        else
+            self:die()
+        end
+    end
+
+    -- If the player is dead, just run the death animation
+    if self.isDead then
+        self.animationTimer = self.animationTimer + dt
+        if self.animationTimer >= self.frameDuration then
+            self.animationTimer = self.animationTimer - self.frameDuration
+            self.currentFrame = self.currentFrame + 1
+
+            -- If the death animation finishes, mark the player for removal
+            if self.currentFrame > #self.animations.die then
+                self.toRemove = true
+            end
+        end
+        return
     end
 
     -- Get movement inputs.

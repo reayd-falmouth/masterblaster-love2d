@@ -70,68 +70,15 @@ function spawnPlayers()
     LOG.debug("SPAWNING COMPLETE")
 end
 
-local function dumpObjectInfo(obj)
-    print("=== Dumping object info ===")
-    print("Type:", type(obj))
-    if type(obj) == "table" then
-        print("Table keys:")
-        for k, v in pairs(obj) do
-            print("  " .. tostring(k) .. ":", type(v))
-        end
-    else
-        local mt = debug.getmetatable(obj)
-        if mt then
-            print("Metatable keys:")
-            for k, v in pairs(mt) do
-                print("  " .. tostring(k) .. ":", type(v))
-            end
-        else
-            print("No metatable available.")
-        end
-    end
-    print("=== End dump ===")
-end
-
-local function endContact(a, b, coll)
-    -- Optional: Code to run when two colliders separate.
-end
-
-local function preSolve(a, b, coll)
-    -- Optional: Code to run before the physics solver processes the collision.
-end
-
-local function postSolve(a, b, coll)
-    -- Optional: Code to run after the collision is resolved.
-end
-
-local function beginContact(a, b, coll)
-    local objA = a:getObject()
-    local objB = b:getObject()
-
-    -- Check if a fireball is colliding with a player
-    if a:getCollisionClass() == "Fireball" and b:getCollisionClass() == "Player" then
-        if objB and objB.protection then
-            -- Ignore collision if player is in yingyang mode
-            return false
-        end
-    elseif a:getCollisionClass() == "Player" and b:getCollisionClass() == "Fireball" then
-        if objA and objA.protection then
-            -- Ignore collision if player is in yingyang mode
-            return false
-        end
-    end
-    -- Process other collisions normally
-end
-
 function Game.keypressed(key)
     if gameStarted and gameTime > 0 then
         if key == "escape" then
             Game.exitToMenu()  -- Use new function to properly reset and exit
         end
         -- Iterate over all players and pass the key event to each one.
-        for _, p in ipairs(Game.players) do
-            p:keypressed(key)
-        end
+        --for _, p in ipairs(Game.players) do
+        --    p:keypressed(key)
+        --end
     elseif gameTime <= 0 then
         -- Return to menu when game ends
         Game.exitToMenu()
