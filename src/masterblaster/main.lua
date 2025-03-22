@@ -3,7 +3,7 @@ local Title = require("scenes.title")
 local currentState = Title
 
 Settings = require("config.settings")
-
+ControllerManager = require("core.controller")
 
 -- Define players with unique control mappings
 KeyMaps = {
@@ -29,6 +29,16 @@ local isFullscreen = true
 -- These variables will be computed on window resize
 local scale, offsetX, offsetY = 1, 0, 0
 
+function love.joystickadded(joystick)
+    controllerManager:addJoystick(joystick)
+    LOG.info("[Joystick Added]:", joystick:getName(), joystick:isGamepad(), joystick:getGUID())
+end
+
+function love.joystickremoved(joystick)
+    --controllerManager:removeJoystick(joystick)
+    LOG.info("[Joystick Removed]:", joystick:getName())
+end
+
 -- Function to change resolution using the global fullscreen flag.
 -- After setting the mode, we force a recalculation of the scale and offsets.
 function changeResolution(newWidth, newHeight)
@@ -47,6 +57,20 @@ function changeResolution(newWidth, newHeight)
 end
 
 function love.load()
+    -- Load controller mappings gracefully
+    controllerManager = ControllerManager:new("gamecontrollerdb.txt")
+    local status, err = pcall(function()
+        controllerManager:loadMappings()
+    end)
+    if not status then
+        print("[WARNING] Joystick mappings failed to load:", err)
+    end
+
+    -- Initialize joysticks already connected
+    for _, joystick in ipairs(love.joystick.getJoysticks()) do
+        controllerManager:addJoystick(joystick)
+    end
+
     local iconData = love.image.newImageData("assets/images/icon_32x.png")
     love.window.setIcon(iconData)
 
