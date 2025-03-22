@@ -35,14 +35,54 @@ local selectedIndex = 1
 -- Font variables (set in load)
 local imageFont
 
+local joystickCount = 0
+local basePlayers = 1
+
+-- Helper function to check for an element in a table
+local function tableContains(tbl, element)
+    for _, value in ipairs(tbl) do
+        if value == element then return true end
+    end
+    return false
+end
+
+-- Modified: buildPlayerChoice now always updates the players count to reflect the maximum available.
+function buildPlayerChoice(basePlayers, menuItems)
+    for i, item in ipairs(menuItems) do
+        if item.key == "players" then
+            local newChoices = {}
+            -- For multiple controllers, offer choices from 2 up to basePlayers.
+            for j = 0, basePlayers do
+                table.insert(newChoices, j)
+            end
+            item.choices = newChoices
+            -- Automatically update the player's count to the highest valid value.
+            item.value = newChoices[#newChoices]
+            Settings.players = item.value
+        end
+    end
+end
+
 function MainMenu.load()
     Font.load()
     imageFont = Font.getImageFont()
     love.graphics.setBackgroundColor(UITheme.defaultTheme.backgroundColor)
+    -- Update the PLAYERS menu item based on attached controllers.
+    -- Determine the actual number of attached joysticks.
+    joystickCount = #love.joystick.getJoysticks()
+
+    -- Limit to a maximum of 5 players.
+    basePlayers = math.min(joystickCount, 5)
+
+    -- Rebuild the choices for PLAYERS.
+    buildPlayerChoice(basePlayers, menuItems)
 end
 
 function MainMenu.update(dt)
     -- Static menu; no dynamic updates needed
+    joystickCount = #love.joystick.getJoysticks()
+    basePlayers = math.min(joystickCount, 5)
+    buildPlayerChoice(basePlayers, menuItems)
 end
 
 function MainMenu.draw()
@@ -127,10 +167,14 @@ function MainMenu.keypressed(key)
             Settings[item.key] = item.value
         end
     elseif key == "return" or key == "kpenter" then
-        -- Apply settings and start game
-        PlayerStats = Stats.new({ Settings.startMoney, Settings.startMoneyAmount })
-        PlayerStats:init(Settings.players)
-        switchState(Game)
+        if Settings.players and Settings.players >= 2 then
+            -- Apply settings and start game
+            PlayerStats = Stats.new({ Settings.startMoney, Settings.startMoneyAmount })
+            PlayerStats:init(Settings.players)
+            switchState(Game)
+        else
+            LOG.warning("At least 2 players are required to start the game.")
+        end
     end
 end
 

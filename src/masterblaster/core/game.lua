@@ -50,20 +50,21 @@ local function loadAudio()
 end
 
 -- Helper function to spawn players
-local function spawnPlayers()
+function spawnPlayers()
     LOG.debug("SPAWNING PLAYERS")
     local numPlayers = Settings.players
-    LOG.debug("  Getting spawn positions...")
     local spawnPositions = Spawns:getSpawnPositions(numPlayers, Game.map)
 
-    LOG.debug("  Setting positions..")
     Game.players = {}
+    local joysticks = love.joystick.getJoysticks()
     for i = 1, numPlayers do
-        local p = Player:new(i, KeyMaps[i].keys)
+        local joystick = joysticks[i]
+        local guid = joystick and joystick:getGUID() or ("player" .. i)
+        local p = Player:new(i, KeyMaps[i].keys, guid)
         p.x = spawnPositions[i].x
         p.y = spawnPositions[i].y
         p.collider:setPosition(p.x, p.y)
-        table.insert(Game.players, p)
+        Game.players[guid] = p  -- Store the player keyed by its GUID
     end
 
     LOG.debug("SPAWNING COMPLETE")
@@ -227,6 +228,17 @@ end
 
 function Game.update(dt)
     Game.world:update(dt)
+    -- Update global ControllerInputs with the latest inputs.
+    ControllerInputs = controllerManager:getPlayerInputs()
+
+    for guid, input in pairs(ControllerInputs) do
+        if Game.players then
+            local player = Game.players[guid]
+            if player then
+                player:handleControllerInput(input)
+            end
+        end
+    end
 
     if not gameStarted then
         -- Countdown until game start
@@ -283,17 +295,16 @@ function Game.update(dt)
         end
 
         -- Existing player, bomb, fireball, and block update loops...
-        for i = #Game.players, 1, -1 do
-            local p = Game.players[i]
+        for guid, p in pairs(Game.players) do
             p:update(dt)
             if p.toRemove then
-                table.remove(Game.players, i)
+               Game.players[guid] = nil
             end
         end
 
         -- 3-second survival check for win condition:
         local activePlayers = {}
-        for i, p in ipairs(Game.players) do
+        for guid, p in pairs(Game.players) do
             if not p.toRemove then
                 table.insert(activePlayers, p)
             end
@@ -369,7 +380,7 @@ function Game.draw()
             end
 
             -- 4) Draw players
-            for _, player in ipairs(Game.players) do
+            for _, player in pairs(Game.players) do
                 player:draw(0, 0)
             end
 

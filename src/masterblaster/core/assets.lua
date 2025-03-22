@@ -52,7 +52,7 @@ Assets.ITEM_DEFINITIONS = {
     cost = 3,
     row = 3, col = 5,
     weight = 70,
-    duration = 10,
+    duration = 3,
     shopItem = true
   },
   {
@@ -70,7 +70,7 @@ Assets.ITEM_DEFINITIONS = {
     name = "DEATH",
     cost = 0,  -- Not available in shop
     row = 3, col = 8,
-    weight = 5,
+    weight = 3,
     shopItem = false
   },
   {
@@ -98,7 +98,7 @@ Assets.ITEM_DEFINITIONS = {
     cost = 0,  -- Not available in shop
     row = 3, col = 11,
     weight = 3,
-    duration = 10,
+    duration = 3,
     shopItem = false
   },
   {
@@ -116,7 +116,7 @@ Assets.ITEM_DEFINITIONS = {
     name = "CONTROLLER",
     cost = 4,
     row = 3, col = 13,
-    weight = 5,
+    weight = 3,
     shopItem = true
   },
   {
