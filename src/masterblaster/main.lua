@@ -149,21 +149,23 @@ function love.keypressed(key)
     end
 
     -- Increase resolution using plus key ("=" or "kp+"), but only if not at max preset
-    if key == "kp+" or key == "=" then
-        if currentResolutionIndex < #resolutions then
-            currentResolutionIndex = currentResolutionIndex + 1
-            local res = resolutions[currentResolutionIndex]
-            changeResolution(res.width, res.height)
-            print("Changed resolution to " .. res.width .. "x" .. res.height)
-        end
+    if not isFullscreen then
+        if key == "kp+" or key == "=" then
+            if currentResolutionIndex < #resolutions then
+                currentResolutionIndex = currentResolutionIndex + 1
+                local res = resolutions[currentResolutionIndex]
+                changeResolution(res.width, res.height)
+                print("Changed resolution to " .. res.width .. "x" .. res.height)
+            end
 
-    -- Decrease resolution using minus key ("-" or "kp-"), but only if not at min preset
-    elseif key == "kp-" or key == "-" then
-        if currentResolutionIndex > 1 then
-            currentResolutionIndex = currentResolutionIndex - 1
-            local res = resolutions[currentResolutionIndex]
-            changeResolution(res.width, res.height)
-            print("Changed resolution to " .. res.width .. "x" .. res.height)
+            -- Decrease resolution using minus key ("-" or "kp-"), but only if not at min preset
+        elseif key == "kp-" or key == "-" then
+            if currentResolutionIndex > 1 then
+                currentResolutionIndex = currentResolutionIndex - 1
+                local res = resolutions[currentResolutionIndex]
+                changeResolution(res.width, res.height)
+                print("Changed resolution to " .. res.width .. "x" .. res.height)
+            end
         end
     end
 
