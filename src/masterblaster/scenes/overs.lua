@@ -1,6 +1,5 @@
 -- overs.lua
 local Assets = require("core.assets")
-local PlayerStats = require("core.stats")
 local Menu = require("scenes.menu")
 local UITheme = require("core.theme")
 local Overs = {}
@@ -11,7 +10,7 @@ local winSound = nil
 
 function Overs.load()
     -- Find the winning player (the first with wins >= winsNeeded)
-    for i, stats in ipairs(PlayerStats.players) do
+    for i, stats in pairs(PlayerStats.players) do
         if stats.wins >= Settings.winsNeeded then
             winningPlayerIndex = i
             break
@@ -41,7 +40,7 @@ function Overs.draw()
     
     local spriteX = (VIRTUAL_WIDTH - SPRITE_WIDTH) / 2
     local spriteY = 100
-    love.graphics.setColor(UITheme.fgColor)
+    love.graphics.setColor(UITheme.defaultTheme.foregroundColor)
     love.graphics.draw(playerSpriteSheet, quad, spriteX, spriteY)
 
     love.graphics.setColor(UITheme.defaultTheme.primaryColor)
