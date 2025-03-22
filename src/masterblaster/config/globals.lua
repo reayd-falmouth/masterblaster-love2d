@@ -13,7 +13,7 @@ VIRTUAL_HEIGHT = 256
 ENABLE_MUSIC = false
 
 -- Debug mode toggle
-DEBUG = false
+DEBUG = true
 
 -- Tile size (useful for grid-based positioning in the game world)
 TILE_SIZE = 16

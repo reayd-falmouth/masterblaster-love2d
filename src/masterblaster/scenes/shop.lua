@@ -15,18 +15,13 @@ Shop.cashSound = nil
 local TILE_SIZE = Assets.TILE_SIZE
 
 function Shop.drawObjectSprite(quad, x, y)
-    love.graphics.setColor(UITheme.fgColor)  -- Draw with the foreground tint
+    love.graphics.setColor(UITheme.defaultTheme.foregroundColor)  -- Draw with the foreground tint
     love.graphics.draw(Assets.objectSpriteSheet, quad, x, y)
     love.graphics.setColor(UITheme.defaultTheme.secondaryColor)  -- Restore highlight tint
 end
 
 -- This function reinitializes the shop each time the shop state is entered.
 function Shop.load()
-    if Settings.shop then
-        switchState(Game)
-        return
-    end
-
     -- Reset state variables to avoid stale data.
     Shop.selectedIndex = 1
     Shop.currentPlayerIndex = 1
