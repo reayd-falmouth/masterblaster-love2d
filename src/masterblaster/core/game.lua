@@ -5,7 +5,6 @@ local windfield = require ("lib.windfield")
 local Map = require("core.map")
 local Player = require "entities.player"
 local Assets = require("core.assets")  -- Centralized assets module
-local Block = require("entities.block")
 local Audio = require("system.audio")
 
 Game = {}
@@ -51,34 +50,11 @@ end
 
 -- Helper function to spawn players
 local function spawnPlayers()
-    log.debug("SPAWNING PLAYERS")
-    local numPlayers = GameSettings.players
-    log.debug("  Getting spawn positions...")
-    local spawnPositions = Spawns:getSpawnPositions(numPlayers, Game.map)
+    LOG.debug("SPAWNING PLAYERS")
+    local numPlayers = Settings.players
 
-    -- Ensure KeyMaps is defined.
-    if not KeyMaps then
-        local joysticks = love.joystick.getJoysticks()
-        local joystickCount = #joysticks
-        if joystickCount < 1 then
-            -- No controller: only keyboard.
-            KeyMaps = {
-                { name = "Player 1 (Keyboard)", keys = { up = "up", down = "down", left = "left", right = "right", bomb = "space" } }
-            }
-        elseif joystickCount == 1 then
-            -- One controller: add keyboard as player 1 and controller as player 2.
-            KeyMaps = {
-                { name = "Player 1 (Keyboard)", keys = { up = "up", down = "down", left = "left", right = "right", bomb = "space" } },
-                { name = "Player 2 (Controller)", keys = { up = "dpup", down = "dpdown", left = "dpleft", right = "dpright", bomb = "a" } }
-            }
-        else
-            -- More than one controller: assign each controller its own mapping.
-            KeyMaps = {}
-            for i = 1, joystickCount do
-                KeyMaps[i] = { name = "Player " .. i, keys = { up = "dpup", down = "dpdown", left = "dpleft", right = "dpright", bomb = "a" } }
-            end
-        end
-    end
+    LOG.debug("  Getting spawn positions...")
+    local spawnPositions = Spawns:getSpawnPositions(numPlayers, Game.map)
 
     log.debug("  Setting positions..")
     Game.players = {}
@@ -86,18 +62,8 @@ local function spawnPlayers()
     local joystickCount = #joysticks
 
     for i = 1, numPlayers do
-        local controllerGUID = nil
-        -- Determine if this player's mapping is for a gamepad.
-        if KeyMaps[i].keys.up == "dpup" then
-            -- If there's one joystick and we're expecting a controller for player 2:
-            if joystickCount == 1 and i == 2 then
-                controllerGUID = joysticks[1]:getGUID()
-            elseif joystickCount > 1 then
-                -- For multiple controllers, assume player i uses the i-th joystick.
-                controllerGUID = joysticks[i] and joysticks[i]:getGUID() or nil
-            end
-        end
-
+        -- For multiple controllers, assume player i uses the i-th joystick.
+        local controllerGUID = joysticks[i]:getGUID()
         local p = Player:new(i, KeyMaps[i].keys, controllerGUID)
         p.x = spawnPositions[i].x
         p.y = spawnPositions[i].y
@@ -105,7 +71,7 @@ local function spawnPlayers()
         table.insert(Game.players, p)
     end
 
-    log.debug("SPAWNING COMPLETE")
+    LOG.debug("SPAWNING COMPLETE")
 end
 
 function Game.keypressed(key)
@@ -191,7 +157,7 @@ function Game.reset()
     countdown = 3
     countdownTimer = 1
     gameStarted = false
-    gameTime = GameSettings.shrinking == "ON" and 180 or 300
+    gameTime = Settings.shrinking and 180 or 300
     alarmThreshold = gameTime / 3
     alarmTriggered = false
     playerResults = {}
@@ -231,7 +197,7 @@ function Game.update(dt)
         gameTime = gameTime - dt
 
         -- Alarm logic
-        if GameSettings.shrinking == "ON" then
+        if Settings.shrinking then
             if gameTime <= alarmThreshold and not alarmTriggered then
                 alarmTriggered = true
                 alarmSound:play()
@@ -294,7 +260,7 @@ function Game.update(dt)
             if Game.winTimer >= 3 then
                 if #activePlayers == 1 then
                     local winner = activePlayers[1]
-                    PlayerStats.addWin(winner.index)
+                    PlayerStats:addWin(winner.index)
                 end
                 Game.exitToStandings()
             end
@@ -319,7 +285,7 @@ function Game.draw()
 
     if not gameStarted and countdown > 0 then
         local countdownText = tostring(countdown)
-        love.graphics.setColor(UITheme.highlightColor)
+        love.graphics.setColor(UITheme.defaultTheme.secondaryColor)
         love.graphics.printf(countdownText, 0, VIRTUAL_HEIGHT / 2, VIRTUAL_WIDTH, "center")
         love.graphics.setColor(1, 1, 1, 1)
 

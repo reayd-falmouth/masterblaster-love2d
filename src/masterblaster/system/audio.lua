@@ -1,5 +1,4 @@
--- audio.lua
-
+-- masterblaster/system/audio.lua
 local Audio = {
     -- Separate volume for music and SFX
     musicVolume = 1.0,
@@ -7,32 +6,41 @@ local Audio = {
     musicPitch  = 1.5,
     sfxPitch    = 1.5,
 
-    -- Tables to hold your music and SFX sources
+    -- Tables to hold music and SFX sources
     musicSources = {},
     sfxSources   = {}
 }
 
+------------------------------------------------------
+-- LOAD AUDIO FILES
+------------------------------------------------------
+
+--- Loads all sound files into the system.
 function Audio.load()
-    -- MUSIC (streamed)
-    Audio.musicSources.arena = love.audio.newSource("assets/sounds/music.ogg", "stream")
+    local function loadSound(path, mode)
+        if not love.filesystem.getInfo(path) then
+            error("Sound file not found: " .. path)
+        end
+        return love.audio.newSource(path, mode)
+    end
 
-    -- SFX (static)
-    Audio.sfxSources.alarm   = love.audio.newSource("assets/sounds/alarm.ogg", "static")
-    Audio.sfxSources.bingo   = love.audio.newSource("assets/sounds/bingo.ogg", "static")
-    Audio.sfxSources.bingo22 = love.audio.newSource("assets/sounds/bingo22.ogg", "static")
-    Audio.sfxSources.bubble  = love.audio.newSource("assets/sounds/bubble.ogg", "static")
-    Audio.sfxSources.cash    = love.audio.newSource("assets/sounds/cash.ogg", "static")
-    Audio.sfxSources.die     = love.audio.newSource("assets/sounds/die.ogg", "static")
-    Audio.sfxSources.effect  = love.audio.newSource("assets/sounds/effect.ogg", "static")
-    Audio.sfxSources.explode = love.audio.newSource("assets/sounds/explode.ogg", "static")
-    Audio.sfxSources.go      = love.audio.newSource("assets/sounds/go.ogg", "static")
-    Audio.sfxSources.warp    = love.audio.newSource("assets/sounds/warp.ogg", "static")
-    Audio.sfxSources.click   = love.audio.newSource("assets/sounds/burp.ogg", "static")
+    -- Load music
+    Audio.musicSources.arena = loadSound("assets/sounds/music.ogg", "stream")
 
-    -- Set initial volumes and (optionally) looping for music
+    -- Load SFX
+    local sfxFiles = {
+        "alarm", "bingo", "bingo22", "bubble", "cash",
+        "die", "effect", "explode", "go", "warp", "burp"
+    }
+
+    for _, name in ipairs(sfxFiles) do
+        Audio.sfxSources[name] = loadSound("assets/sounds/" .. name .. ".ogg", "static")
+    end
+
+    -- Set initial volume and looping settings
     for _, track in pairs(Audio.musicSources) do
         track:setVolume(Audio.musicVolume)
-        track:setLooping(true)  -- typical for a background music track
+        track:setLooping(true)
     end
 
     for _, sfx in pairs(Audio.sfxSources) do
@@ -41,18 +49,23 @@ function Audio.load()
 end
 
 ------------------------------------------------------
--- PLAY / STOP: MUSIC
+-- PLAY / STOP FUNCTIONS
 ------------------------------------------------------
+
+--- Plays a music track.
+-- @param name (string) The name of the track
 function Audio.playMusic(name)
     local track = Audio.musicSources[name]
     if track then
         track:setVolume(Audio.musicVolume)
         track:play()
     else
-        print("Warning: Attempt to play unknown MUSIC track:", name)
+        print("Warning: Attempt to play unknown music track:", name)
     end
 end
 
+--- Stops a music track.
+-- @param name (string) The name of the track
 function Audio.stopMusic(name)
     local track = Audio.musicSources[name]
     if track then
@@ -60,9 +73,8 @@ function Audio.stopMusic(name)
     end
 end
 
-------------------------------------------------------
--- PLAY / STOP: SFX
-------------------------------------------------------
+--- Plays a sound effect.
+-- @param name (string) The name of the sound effect
 function Audio.playSFX(name)
     local sfx = Audio.sfxSources[name]
     if sfx then
@@ -73,6 +85,8 @@ function Audio.playSFX(name)
     end
 end
 
+--- Stops a sound effect.
+-- @param name (string) The name of the sound effect
 function Audio.stopSFX(name)
     local sfx = Audio.sfxSources[name]
     if sfx then
@@ -83,6 +97,7 @@ end
 ------------------------------------------------------
 -- VOLUME CONTROLS
 ------------------------------------------------------
+
 function Audio.setMusicVolume(vol)
     Audio.musicVolume = vol
     for _, track in pairs(Audio.musicSources) do

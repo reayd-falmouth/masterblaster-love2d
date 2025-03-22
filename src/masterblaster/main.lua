@@ -1,7 +1,9 @@
 -- main.lua
 Audio = require("system.audio")
 Audio.load()
+
 ControllerManager = require("core.controller")
+
 GameSettings = require("config.settings")
 Game = require("core.game")
 
@@ -11,7 +13,6 @@ PlayerStats = require("core.stats")
 Title = require("scenes.title")
 Credits = require("scenes.credits")
 Shop = require("scenes.shop")
-
 
 currentState = Title
 
@@ -156,7 +157,7 @@ function love.keypressed(key)
 end
 
 function love.keyreleased(key)
-    log.debug("love.keyreleased: " .. key)
+    LOG.debug("love.keyreleased: " .. key)
     if currentState.keyreleased then
         currentState.keyreleased(key)
     end
@@ -169,6 +170,7 @@ function switchState(newState, musicFile)
     end
     currentState = newState
     if currentState.load then
+        LOG.info("Going to title...")
         currentState.load()
     end
     if musicFile then

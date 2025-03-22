@@ -69,13 +69,13 @@ end
 
 -- Generate the base arena map, then place destructible blocks.
 function map:generateMap()
-    log.debug("MAP CREATION START")
+    LOG.debug("MAP CREATION START")
     self.tileMap = {}  -- Ensure it's a fresh table
 
-    log.debug("  Getting safe zones...")
+    LOG.debug("  Getting safe zones...")
     local safeZones = self:getSafeZones()
 
-    log.debug("  Generating walls...")
+    LOG.debug("  Generating walls...")
     for r = 1, self.rows do
         self.tileMap[r] = {}
         for c = 1, self.cols do
@@ -91,10 +91,10 @@ function map:generateMap()
     end
 
     -- Place destructible blocks, avoiding safe zones.
-    log.debug("  Placing destructibles...")
+    LOG.debug("  Placing destructibles...")
     self:placeDestructibles(safeZones)
 
-    log.debug("MAP CREATION COMPLETE")
+    LOG.debug("MAP CREATION COMPLETE")
 end
 
 -- Place destructible blocks randomly, skipping safe zones.
@@ -281,8 +281,8 @@ function map:update(dt, alarmActive)
     end
 
     -- Only update shrinking if the settings are on and alarm has been triggered.
-    if GameSettings.shrinking and alarmActive then
-        log.debug("Alarm active, shrinking arena...")
+    if Settings.shrinking and alarmActive then
+        LOG.debug("Alarm active, shrinking arena...")
         self.shrinkTimer = self.shrinkTimer + dt
         if self.shrinkTimer >= self.shrinkDelay then
             self.shrinkTimer = 0

@@ -21,7 +21,7 @@ function Player:getGridPosition()
     local cx, cy = self.collider:getPosition()  -- Get the collider's center.
     local row = math.floor(cy / Game.map.tileSize) + 1
     local col = math.floor(cx / Game.map.tileSize) + 1
-    log.debug("Player grid location (center): " .. row .. " " .. col)
+    LOG.debug("Player grid location (center): " .. row .. " " .. col)
     return row, col
 end
 
@@ -33,7 +33,7 @@ function Player:activateProtectionTimer()
 end
 
 function Player:applyItemEffect(item)
-    log.debug("Applying item " .. item.key .. " to player")
+    LOG.debug("Applying item " .. item.key .. " to player")
 
     if item.key == "bomb" then
         self.bombs = self.bombs + 1
@@ -43,7 +43,7 @@ function Player:applyItemEffect(item)
         self.superman = true
     elseif item.key == "protection" then
         self.protection = true
-        --log.debug("collision class set to PlayerInvincible")
+        --LOG.debug("collision class set to PlayerInvincible")
         --self.collider:setCollisionClass('PlayerInvincible')
     elseif item.key == "ghost" then
         self.ghost = true
@@ -63,7 +63,7 @@ function Player:applyItemEffect(item)
         self.money = self.money + 1  -- Change value as needed.
         self.stats.money = self.stats.money + 1
     elseif item.key == "controller" then
-        log.debug("Remote controller active")
+        LOG.debug("Remote controller active")
         self.remote = true
         self.timebomb = true
     end
@@ -71,12 +71,12 @@ end
 
 
 function Player:keyreleased(key)
-    log.debug("Player:keyreleased received: " .. key)
+    LOG.debug("Player:keyreleased received: " .. key)
     if self.keyMap and key == self.keyMap.bomb and self.timebomb then
         for _, bomb in ipairs(Game.bombs) do
             if bomb.owner == self and bomb.waiting then
                 bomb.waiting = false
-                log.debug("Bomb timer resumed")
+                LOG.debug("Bomb timer resumed")
             end
         end
     end
@@ -114,7 +114,7 @@ function Player:dropBomb()
     if bombCount < self.bombs then
         local bomb = nil
         if self.remote then
-            log.debug("Remote bomb activated: use cursor keys to move the bomb.")
+            LOG.debug("Remote bomb activated: use cursor keys to move the bomb.")
             bomb = Bomb:new(self, true)
             table.insert(Game.bombs, bomb)
             self.stopped = true
@@ -122,9 +122,9 @@ function Player:dropBomb()
             bomb = Bomb:new(self)
             table.insert(Game.bombs, bomb)
         end
-        log.debug("Bomb dropped at (" .. bomb.x .. ", " .. bomb.y .. ")")
+        LOG.debug("Bomb dropped at (" .. bomb.x .. ", " .. bomb.y .. ")")
     else
-        log.warning("You have reached your bomb limit!")
+        LOG.warning("You have reached your bomb limit!")
     end
 end
 
