@@ -1,3 +1,4 @@
+-- core/assets.lua
 local Assets = {}
 Assets.__index = Assets
 

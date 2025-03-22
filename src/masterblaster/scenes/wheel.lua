@@ -105,7 +105,7 @@ function WheelOfFortune.draw()
     local totalHeight = 300  -- You can adjust this if you want to calculate dynamically
 
     -- We'll center this block in the screen, but push it down a bit from the title
-    local startY = (VIRTUAL_HEIGHT / 2) - (totalHeight / 2) + 40
+    local startY = 100
 
     -- Center the sprite horizontally (by subtracting half the sprite width)
     local spriteX = (VIRTUAL_WIDTH / 2) - (SPRITE_WIDTH / 2)

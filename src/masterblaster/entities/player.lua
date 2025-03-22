@@ -37,6 +37,7 @@ function Player:applyItemEffect(item)
 
     if item.key == "bomb" then
         self.bombs = self.bombs + 1
+        LOG.debug("Player bomb count increased to ".. self.bombs)
     elseif item.key == "powerUp" then
         self.power = self.power + 2
     elseif item.key == "superman" then

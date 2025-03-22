@@ -1,4 +1,4 @@
--- src/ui/menu.lua
+-- scenes/menu.lua
 local MainMenu = {}
 local Font = require("system.fonts")
 local UITheme = require("core.theme")  -- Import shared colors
