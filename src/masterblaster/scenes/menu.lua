@@ -20,12 +20,12 @@ end
 local menuItems = {
     { label = "WINS NEEDED", value = Settings.winsNeeded, choices = {1, 2, 3, 4, 5, 6, 7, 8, 9}, key = "winsNeeded" },
     { label = "PLAYERS", value = Settings.players, choices = {2, 3, 4, 5}, key = "players" },
-    { label = "SHOP", value = Settings.shop, choices = getBooleanChoices(), key = "shop" },
+    --{ label = "SHOP", value = Settings.shop, choices = getBooleanChoices(), key = "shop" },
     { label = "SHRINKING", value = Settings.shrinking, choices = getBooleanChoices(), key = "shrinking" },
     { label = "FASTIGNITION", value = Settings.fastIgnition, choices = getBooleanChoices(), key = "fastIgnition" },
-    { label = "START MONEY", value = Settings.startMoney, choices = getBooleanChoices(), key = "startMoney" },
-    { label = "NORMAL LEVEL", value = Settings.normalLevel, choices = getYesNoChoices(), key = "normalLevel" },
-    { label = "GAMBLING", value = Settings.gambling, choices = getYesNoChoices(), key = "gambling" },
+    --{ label = "START MONEY", value = Settings.startMoney, choices = getBooleanChoices(), key = "startMoney" },
+    --{ label = "NORMAL LEVEL", value = Settings.normalLevel, choices = getYesNoChoices(), key = "normalLevel" },
+    --{ label = "GAMBLING", value = Settings.gambling, choices = getYesNoChoices(), key = "gambling" },
 
 }
 
