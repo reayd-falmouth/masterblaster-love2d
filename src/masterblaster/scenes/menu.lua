@@ -18,14 +18,14 @@ end
 
 -- Menu item definitions
 local menuItems = {
-    { label = "WINS NEEDED", value = Settings.DEFAULTS.winsNeeded, choices = {1, 2, 3, 4, 5, 6, 7, 8, 9}, key = "winsNeeded" },
-    { label = "PLAYERS", value = Settings.DEFAULTS.players, choices = {2, 3, 4, 5}, key = "players" },
-    { label = "SHOP", value = Settings.DEFAULTS.shop, choices = getBooleanChoices(), key = "shop" },
-    { label = "SHRINKING", value = Settings.DEFAULTS.shrinking, choices = getBooleanChoices(), key = "shrinking" },
-    { label = "FASTIGNITION", value = Settings.DEFAULTS.fastIgnition, choices = getBooleanChoices(), key = "fastIgnition" },
-    { label = "START MONEY", value = Settings.DEFAULTS.startMoney, choices = getBooleanChoices(), key = "startMoney" },
-    { label = "NORMAL LEVEL", value = Settings.DEFAULTS.normalLevel, choices = getYesNoChoices(), key = "normalLevel" },
-    { label = "GAMBLING", value = Settings.DEFAULTS.gambling, choices = getYesNoChoices(), key = "gambling" },
+    { label = "WINS NEEDED", value = Settings.winsNeeded, choices = {1, 2, 3, 4, 5, 6, 7, 8, 9}, key = "winsNeeded" },
+    { label = "PLAYERS", value = Settings.players, choices = {2, 3, 4, 5}, key = "players" },
+    --{ label = "SHOP", value = Settings.shop, choices = getBooleanChoices(), key = "shop" },
+    { label = "SHRINKING", value = Settings.shrinking, choices = getBooleanChoices(), key = "shrinking" },
+    { label = "FASTIGNITION", value = Settings.fastIgnition, choices = getBooleanChoices(), key = "fastIgnition" },
+    --{ label = "START MONEY", value = Settings.startMoney, choices = getBooleanChoices(), key = "startMoney" },
+    --{ label = "NORMAL LEVEL", value = Settings.normalLevel, choices = getYesNoChoices(), key = "normalLevel" },
+    --{ label = "GAMBLING", value = Settings.gambling, choices = getYesNoChoices(), key = "gambling" },
 
 }
 
@@ -51,14 +51,18 @@ function buildPlayerChoice(basePlayers, menuItems)
     for i, item in ipairs(menuItems) do
         if item.key == "players" then
             local newChoices = {}
-            -- For multiple controllers, offer choices from 2 up to basePlayers.
-            for j = 0, basePlayers do
+            for j = 2, basePlayers do  -- Adjusted to always have at least 2 players
                 table.insert(newChoices, j)
             end
             item.choices = newChoices
-            -- Automatically update the player's count to the highest valid value.
-            item.value = newChoices[#newChoices]
-            Settings.players = item.value
+            -- If current setting invalid, update it
+            if not tableContains(newChoices, Settings.players) then
+                item.value = newChoices[#newChoices]
+                Settings.players = item.value
+            end
+        else
+            -- IMPORTANT: Keep other settings synced
+            item.value = Settings[item.key]
         end
     end
 end

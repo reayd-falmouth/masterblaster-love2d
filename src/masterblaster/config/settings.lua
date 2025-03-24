@@ -5,12 +5,12 @@ local Settings = {}
 Settings.DEFAULTS = {
     winsNeeded = 3,
     players = 2,
-    shop = true,
+    shop = false,
     shrinking = true,
     fastIgnition = true,
     startMoney = true,
     normalLevel = true,
-    gambling = true,
+    gambling = false,
     startMoneyAmount = 1
 }
 
